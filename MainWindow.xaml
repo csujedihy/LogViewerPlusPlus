@@ -41,8 +41,7 @@
                 Width="Auto"
                 ScrollViewer.HorizontalScrollBarVisibility="Visible"
                 HorizontalAlignment="Stretch"
-                ItemsSource="{Binding Log.Logs,Mode=OneWay}"
-                SelectionChanged="LogListView_SelectionChanged">
+                ItemsSource="{Binding Log.Logs,Mode=OneWay}">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Border Padding="2" Width="Auto" Background="{Binding LogRowBgColor}">
@@ -74,6 +73,7 @@
             </ListView.ItemTemplate>
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
+                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                     <Setter Property="Padding" Value="0"/>
                     <Setter Property="Margin" Value="0"/>
                     <Setter Property="BorderThickness" Value="0"/>

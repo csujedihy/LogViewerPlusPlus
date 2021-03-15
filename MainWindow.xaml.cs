@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -91,12 +92,6 @@ namespace LogViewer {
                 return;
             }
         }
-
-        private void LogListView_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            foreach (var item in LogListView.SelectedItems) {
-                (item as Log).LogRowBgColor = "LightSlayGray";
-            }
-        }
     }
 
     public class Log : INotifyPropertyChanged {
@@ -113,10 +108,18 @@ namespace LogViewer {
             get { return _LogRowBgColor; }
             set { _LogRowBgColor = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LogRowBgColor))); }
         }
+        private bool _IsSelected;
+        public bool IsSelected {
+            get { return _IsSelected; }
+            set {
+                SelectLog(value);
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+            }
+        }
         public uint LineNo;
         public static uint Count;
         public static ObservableCollection<Log> Logs = new ObservableCollection<Log>();
-        public static ConcurrentBag<int> SearchMatchedIndices = new ConcurrentBag<int>();
+        public static HashSet<int> SearchMatchedIndices = new HashSet<int>();
         public static BackgroundQueue SearchWorkerQueue = new BackgroundQueue();
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -128,6 +131,16 @@ namespace LogViewer {
             this.LineNoText = this.LineNo.ToString();
             this.TextWeight = "Normal";
             this.LogRowBgColor = "White";
+        }
+
+        private void SelectLog(bool IsSelected) {
+            if (IsSelected) {
+                _IsSelected = true;
+                LogRowBgColor = "Silver";
+            } else {
+                _IsSelected = false;
+                LogRowBgColor = "White";
+            }
         }
 
         public static void ClearSearchResults() {
