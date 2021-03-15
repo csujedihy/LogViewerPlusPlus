@@ -1,0 +1,93 @@
+﻿<Window x:Class="LogViewer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:LogViewer"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800" >
+    <Window.CommandBindings>
+        <CommandBinding
+            Command="ApplicationCommands.Open"
+            Executed="OpenCommandHandler" />
+        <CommandBinding
+            Command="ApplicationCommands.Close"
+            Executed="CloseCommandHandler" />
+    </Window.CommandBindings>
+    <Grid x:Name="MainGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="30" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Menu>
+            <MenuItem Header="File">
+                <MenuItem
+                    Header="_Open"
+                    Command="ApplicationCommands.Open" />
+                <MenuItem
+                    Header="_Close"
+                    Command="ApplicationCommands.Close"/>
+            </MenuItem>
+        </Menu>
+        <ListView
+                Grid.Row="1"
+                x:Name="LogListView"
+                Height="Auto"
+                MaxHeight="1000"
+                Width="Auto"
+                ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                HorizontalAlignment="Stretch"
+                ItemsSource="{Binding Log.Logs,Mode=OneWay}"
+                SelectionChanged="LogListView_SelectionChanged">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Border Padding="2" Width="Auto" Background="{Binding LogRowBgColor}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Grid.Column="0"
+                                x:Name="LineNoTextBlock"
+                                Text="{Binding LineNoText}"
+                                Width="{Binding LineNoWidth}"
+                                TextAlignment="Right"
+                                VerticalAlignment="Center"
+                                Margin="0,0,5,0"
+                                Foreground="Crimson" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Center"
+                                Text="{Binding Text}"
+                                FontWeight="{Binding TextWeight, Mode=OneWay}"
+                                Width="Auto" />
+                        </Grid>
+                    </Border>
+
+                </DataTemplate>
+            </ListView.ItemTemplate>
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Margin" Value="0"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+        </ListView>
+        <StackPanel Grid.Row="2" Orientation = "Horizontal">
+            <TextBox x:Name="SearchBox" Margin="5" Width="150" VerticalContentAlignment="Center" TextChanged="SearchBoxTextChanged"/>
+            <TextBlock x:Name="SearchResultTextBox" Margin="5" Width="Auto" Text="No results" VerticalAlignment="Center" />
+            <Button x:Name="PrevButton" Content="Prev" Margin="5" Width="Auto"/>
+            <Button x:Name="NextButton" Content="Next" Margin="5" Width="Auto"/>
+            <TextBlock Margin="5" Width="Auto" Text="Go to Line" VerticalAlignment="Center"/>
+            <TextBox x:Name="GoToLineBox" Margin="5" Width="150" TextChanged="GoToLineBoxTextChanged" VerticalContentAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</Window>
