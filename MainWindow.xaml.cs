@@ -82,7 +82,7 @@ namespace LogViewer {
                     }
                 } else {
                     Dispatcher.Invoke(() => {
-                        SearchResultTextBox.Text = "No result";
+                        SearchResultTextBox.Text = "No results";
                     });
                 }
             });
