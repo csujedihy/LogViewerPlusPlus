@@ -9,18 +9,15 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-
 using System.Windows;
 using System.Windows.Controls;
-
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace LogViewer {
     public partial class MainWindow : Window {
         public MainWindow() {
-            this.InitializeComponent();
-            this.Loaded += MainWindowLoaded;
+            InitializeComponent();
+            Loaded += MainWindowLoaded;
             LogListView.ItemsSource = Log.Logs;
         }
 
@@ -42,7 +39,6 @@ namespace LogViewer {
 
         private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e) {
             var openFileDialog = new OpenFileDialog();
-            // TODO: clear search results and selected items.
             if (openFileDialog.ShowDialog() == true) {
                 Log.LoadLogFile(openFileDialog.FileName);
             }
@@ -73,7 +69,7 @@ namespace LogViewer {
             var SearchTextBox = (TextBox)sender;
             string SearchTextBoxContent = SearchTextBox.Text;
 
-            await Log.SearchWorkerQueue.QueueTask(() => {
+            await Log.WorkerQueue.QueueTask(() => {
                 Log.ClearSearchResults();
                 if (SearchTextBoxContent.Length > 0) {
                     Log.SearchInLogs(SearchTextBoxContent);
@@ -106,7 +102,7 @@ namespace LogViewer {
         }
 
         private async void PrevButton_Click(object sender, RoutedEventArgs e) {
-            await Log.SearchWorkerQueue.QueueTask(() => {
+            await Log.WorkerQueue.QueueTask(() => {
                 var log = Log.GetPrevSearchResult();
                 if (log != null) {
                     Dispatcher.Invoke(() => {
@@ -119,7 +115,7 @@ namespace LogViewer {
         }
 
         private async void NextButton_Click(object sender, RoutedEventArgs e) {
-            await Log.SearchWorkerQueue.QueueTask(() => {
+            await Log.WorkerQueue.QueueTask(() => {
                 var log = Log.GetNextSearchResult();
                 if (log != null) {
                     Dispatcher.Invoke(() => {
@@ -192,7 +188,7 @@ namespace LogViewer {
         public static ObservableCollection<Log> Logs = new ObservableCollection<Log>();
         public static List<Log> SearchResults = new List<Log>();
         private static int SearchMatchesIndicesPos = -1;
-        public static BackgroundQueue SearchWorkerQueue = new BackgroundQueue();
+        public static BackgroundQueue WorkerQueue = new BackgroundQueue();
         public static ControlStyleSchema ControlStyleSchema = new ControlStyleSchema(ColorTheme.LightTheme);
         public static Log LogInTextSelectionState;
 
@@ -277,7 +273,7 @@ namespace LogViewer {
         public static void LoadLogFile(string Path) {
             string Line;
             var LogFileStream = new StreamReader(Path);
-
+            Debug.WriteLine("Load log file...");
             ResetLogs();
 
             while ((Line = LogFileStream.ReadLine()) != null) {

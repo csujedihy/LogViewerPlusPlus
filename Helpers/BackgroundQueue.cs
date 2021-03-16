@@ -19,17 +19,5 @@ namespace LogViewer.Helpers {
                 return previousTask;
             }
         }
-
-        public Task<T> QueueTask<T>(Func<T> work) {
-            lock (key) {
-                var task = previousTask.ContinueWith(
-                  t => work(),
-                  CancellationToken.None,
-                  TaskContinuationOptions.None,
-                  TaskScheduler.Default);
-                previousTask = task;
-                return task;
-            }
-        }
     }
 }
