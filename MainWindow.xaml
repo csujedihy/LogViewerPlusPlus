@@ -64,7 +64,6 @@
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Center"
                                 Text="{Binding Text}"
-                                FontWeight="{Binding TextWeight, Mode=OneWay}"
                                 Width="Auto" />
                         </Grid>
                     </Border>
@@ -84,8 +83,8 @@
         <StackPanel Grid.Row="2" Orientation = "Horizontal">
             <TextBox x:Name="SearchBox" Margin="5" Width="150" VerticalContentAlignment="Center" TextChanged="SearchBoxTextChanged"/>
             <TextBlock x:Name="SearchResultTextBox" Margin="5" Width="Auto" Text="No results" VerticalAlignment="Center" />
-            <Button x:Name="PrevButton" Content="Prev" Margin="5" Width="Auto"/>
-            <Button x:Name="NextButton" Content="Next" Margin="5" Width="Auto"/>
+            <Button x:Name="PrevButton" Content="&#x1f844;" Margin="5, 5, 0, 5" Width="Auto" Padding="5,0,5,0"/>
+            <Button x:Name="NextButton" Content="&#x1f846;" Margin="0, 5, 5, 5" Width="Auto" Padding="5,0,5,0"/>
             <TextBlock Margin="5" Width="Auto" Text="Go to Line" VerticalAlignment="Center"/>
             <TextBox x:Name="GoToLineBox" Margin="5" Width="150" TextChanged="GoToLineBoxTextChanged" VerticalContentAlignment="Center"/>
         </StackPanel>

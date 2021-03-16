@@ -30,6 +30,7 @@ namespace LogViewer {
 
         private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e) {
             OpenFileDialog openFileDialog = new OpenFileDialog();
+            // TODO: clear search results and selected items.
             if (openFileDialog.ShowDialog() == true) {
                 Log.LoadLogFile(openFileDialog.FileName);
             }
@@ -61,17 +62,13 @@ namespace LogViewer {
             string SearchTextBoxContent = SearchTextBox.Text;
 
             await Log.SearchWorkerQueue.QueueTask(() => {
+                int LeastIndex = Log.Count;
                 Log.ClearSearchResults();
                 if (SearchTextBoxContent.Length > 0) {
-                    Log.SearchInLogs(SearchTextBoxContent);
+                    LeastIndex = Log.SearchInLogs(SearchTextBoxContent);
                 }
-                int LeastIndex = Log.Logs.Count;
-                foreach (var Index in Log.SearchMatchedIndices) {
-                    Log.Logs[Index].TextWeight = "DemiBold";
-                    Log.Logs[Index].LogRowBgColor = "Blue";
-                    LeastIndex = Math.Min(LeastIndex, Index);
-                }
-                if (LeastIndex < Log.Logs.Count) {
+
+                if (LeastIndex < Log.Count) {
                     this.Dispatcher.Invoke(() => {
                         LogListView.ScrollIntoView(LogListView.Items[LeastIndex]);
                         LogListView.SelectedItem = LogListView.Items[LeastIndex];
@@ -95,14 +92,15 @@ namespace LogViewer {
     }
 
     public class Log : INotifyPropertyChanged {
+        [Flags]
+        enum HighlightState { 
+            NoHighlight = 0,
+            SearchResultHighlight = 1,
+            SelectedHighlight = 2,
+        };
         public string Text { get; set; }
         public string LineNoText { get; set; }
         public int LineNoWidth { get; set; }
-        private string _TextWeight;
-        public string TextWeight {
-            get { return _TextWeight; }
-            set { _TextWeight = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextWeight))); }
-        }
         private string _LogRowBgColor;
         public string LogRowBgColor {
             get { return _LogRowBgColor; }
@@ -112,15 +110,24 @@ namespace LogViewer {
         public bool IsSelected {
             get { return _IsSelected; }
             set {
-                SelectLog(value);
+                if (value) {
+                    _IsSelected = true;
+                    highlightState |= HighlightState.SelectedHighlight;
+                } else {
+                    _IsSelected = false;
+                    highlightState &= ~HighlightState.SelectedHighlight;
+                }
+                TryHighlight();
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
             }
         }
-        public uint LineNo;
-        public static uint Count;
+        private HighlightState highlightState = HighlightState.NoHighlight;
+        public int LineNo;
+        public static int Count;
         public static ObservableCollection<Log> Logs = new ObservableCollection<Log>();
         public static HashSet<int> SearchMatchedIndices = new HashSet<int>();
         public static BackgroundQueue SearchWorkerQueue = new BackgroundQueue();
+        public static ControlStyleSchema ControlStyleSchema = new ControlStyleSchema(ColorTheme.LightTheme);
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -129,37 +136,43 @@ namespace LogViewer {
             this.Text = Text;
             this.LineNo = Count;
             this.LineNoText = this.LineNo.ToString();
-            this.TextWeight = "Normal";
-            this.LogRowBgColor = "White";
+            highlightState = HighlightState.NoHighlight;
+            this.TryHighlight();
         }
 
-        private void SelectLog(bool IsSelected) {
-            if (IsSelected) {
-                _IsSelected = true;
-                LogRowBgColor = "Silver";
+        private void TryHighlight() {
+            if ((highlightState & HighlightState.SelectedHighlight) != 0) {
+                LogRowBgColor = ControlStyleSchema.LogTextBgSelectedColor;
+            } else if ((highlightState & HighlightState.SearchResultHighlight) != 0) {
+                LogRowBgColor = ControlStyleSchema.LogTextBgSearchResultColor;
             } else {
-                _IsSelected = false;
-                LogRowBgColor = "White";
+                LogRowBgColor = ControlStyleSchema.LogTextBgNormalColor;
             }
         }
 
         public static void ClearSearchResults() {
-            foreach (var Index in SearchMatchedIndices) {
-                Logs[Index].TextWeight = "Normal";
-                Logs[Index].LogRowBgColor = "White";
+            foreach (var i in SearchMatchedIndices) {
+                Logs[i].highlightState &= ~HighlightState.SearchResultHighlight;
+                Logs[i].TryHighlight();
             }
             SearchMatchedIndices.Clear();
         }
 
-        public static void SearchInLogs(String Text) {
+        public static int SearchInLogs(String Text) {
+            int LeastIndex = Count;
             for (int i = 0; i < Count; ++i) {
                 if (Logs[i].Text.IndexOf(Text) != -1) {
+                    LeastIndex = Math.Min(LeastIndex, i);
                     SearchMatchedIndices.Add(i);
+                    Logs[i].highlightState |= HighlightState.SearchResultHighlight;
+                    Logs[i].TryHighlight();
                 }
             }
+            return LeastIndex;
         }
 
         private static void ResetLogs() {
+            ClearSearchResults();
             Logs.Clear();
             Count = 0;
         }
