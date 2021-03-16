@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:LogViewer"
+        xmlns:helpers="clr-namespace:LogViewer.Helpers"
         mc:Ignorable="d"
         Title="LogViewer++" Height="450" Width="800" >
     <Window.CommandBindings>
@@ -40,6 +40,7 @@
                 MaxHeight="1000"
                 Width="Auto"
                 ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                SelectionChanged="LogListView_SelectionChanged"
                 HorizontalAlignment="Stretch"
                 ItemsSource="{Binding Log.Logs,Mode=OneWay}">
             <ListView.ItemTemplate>
@@ -59,22 +60,30 @@
                                 VerticalAlignment="Center"
                                 Margin="0,0,5,0"
                                 Foreground="Crimson" />
+                            <TextBlock
+                                x:Name="LogTextBlock"
+                                Grid.Column="1"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding TextBlockVisibility}"
+                                Text="{Binding Text}"
+                                Width="Auto" />
                             <TextBox
-                                Background="Transparent"
+                                x:Name="LogTextBox"
                                 Grid.Column="1"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Center"
                                 IsReadOnly="True"
-                                BorderThickness="0"
+                                Visibility="{Binding TextSelectableBoxVisibility, Mode=OneWay}"
                                 Text="{Binding Text}"
                                 Width="Auto" />
                         </Grid>
                     </Border>
-
                 </DataTemplate>
             </ListView.ItemTemplate>
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
+                    <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick"/>
                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                     <Setter Property="Padding" Value="0"/>
                     <Setter Property="Margin" Value="0"/>

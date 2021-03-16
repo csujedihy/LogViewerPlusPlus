@@ -14,6 +14,7 @@ using System.Windows;
 using System.Windows.Controls;
 
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace LogViewer {
     public partial class MainWindow : Window {
@@ -26,6 +27,17 @@ namespace LogViewer {
         private void MainWindowLoaded(object sender, RoutedEventArgs e) {
             var window = Window.GetWindow(this);
             window.KeyDown += Window_KeyDown;
+            window.MouseDown += Window_MouseDown;
+        }
+
+        private void Window_MouseDown(object sender, MouseButtonEventArgs e) {
+            var log = ((sender as FrameworkElement).DataContext) as Log;
+            if (Log.LogInTextSelectionState != null) {
+                if (log == null || Log.LogInTextSelectionState != log) {
+                    Log.LogInTextSelectionState.TextBlockVisibility = Visibility.Visible;
+                    Log.LogInTextSelectionState.TextSelectableBoxVisibility = Visibility.Hidden;
+                }
+            }
         }
 
         private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e) {
@@ -118,6 +130,21 @@ namespace LogViewer {
                 }
             });
         }
+
+        private void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
+            var log = (sender as FrameworkElement).DataContext as Log;
+            log.TextBlockVisibility = Visibility.Hidden;
+            log.TextSelectableBoxVisibility = Visibility.Visible;
+            Log.LogInTextSelectionState = log;
+        }
+
+        private void LogListView_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            var log = Log.LogInTextSelectionState;
+            if (log != null) {
+                log.TextBlockVisibility = Visibility.Visible;
+                log.TextSelectableBoxVisibility = Visibility.Hidden;
+            }
+        }
     }
 
     public class Log : INotifyPropertyChanged {
@@ -130,6 +157,16 @@ namespace LogViewer {
         public string Text { get; set; }
         public string LineNoText { get; set; }
         public int LineNoWidth { get; set; }
+        private Visibility _TextSelectableBoxVisibility;
+        public Visibility TextSelectableBoxVisibility {
+            get { return _TextSelectableBoxVisibility; }
+            set { _TextSelectableBoxVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextSelectableBoxVisibility))); }
+        }
+        private Visibility _TextBlockVisibility;
+        public Visibility TextBlockVisibility {
+            get { return _TextBlockVisibility; }
+            set { _TextBlockVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextBlockVisibility))); }
+        }
         private string _LogRowBgColor;
         public string LogRowBgColor {
             get { return _LogRowBgColor; }
@@ -157,6 +194,7 @@ namespace LogViewer {
         private static int SearchMatchesIndicesPos = -1;
         public static BackgroundQueue SearchWorkerQueue = new BackgroundQueue();
         public static ControlStyleSchema ControlStyleSchema = new ControlStyleSchema(ColorTheme.LightTheme);
+        public static Log LogInTextSelectionState;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -165,6 +203,8 @@ namespace LogViewer {
             this.LineNo = Logs.Count + 1;
             this.LineNoText = this.LineNo.ToString();
             this.highlightState = HighlightState.NoHighlight;
+            this.TextBlockVisibility = Visibility.Visible;
+            this.TextSelectableBoxVisibility = Visibility.Hidden;
             this.TryHighlight();
         }
 
@@ -229,6 +269,7 @@ namespace LogViewer {
         }
 
         private static void ResetLogs() {
+            Log.LogInTextSelectionState = null;
             ClearSearchResults();
             Logs.Clear();
         }
