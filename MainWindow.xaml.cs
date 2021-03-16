@@ -29,7 +29,7 @@ namespace LogViewer {
         }
 
         private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e) {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
+            var openFileDialog = new OpenFileDialog();
             // TODO: clear search results and selected items.
             if (openFileDialog.ShowDialog() == true) {
                 Log.LoadLogFile(openFileDialog.FileName);
@@ -54,30 +54,34 @@ namespace LogViewer {
         }
 
         private void CloseCommandHandler(object sender, ExecutedRoutedEventArgs e) {
-            this.Close();
+            Close();
         }
 
         private async void SearchBoxTextChanged(object sender, TextChangedEventArgs e) {
-            TextBox SearchTextBox = (TextBox)sender;
+            var SearchTextBox = (TextBox)sender;
             string SearchTextBoxContent = SearchTextBox.Text;
 
             await Log.SearchWorkerQueue.QueueTask(() => {
                 Log.ClearSearchResults();
                 if (SearchTextBoxContent.Length > 0) {
                     Log.SearchInLogs(SearchTextBoxContent);
-                }
-
-                if (Log.GetCurrentSearchResult() != null) {
-                    this.Dispatcher.Invoke(() => {
-                        LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
-                        LogListView.SelectedItem = Log.GetCurrentSearchResult();
+                    if (Log.GetCurrentSearchResult() != null) {
+                        Dispatcher.Invoke(() => {
+                            SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+                            LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
+                            LogListView.SelectedItem = Log.GetCurrentSearchResult();
+                        });
+                    }
+                } else {
+                    Dispatcher.Invoke(() => {
+                        SearchResultTextBox.Text = "No result";
                     });
                 }
             });
         }
 
         private void GoToLineBoxTextChanged(object sender, TextChangedEventArgs e) {
-            TextBox SearchTextBox = (TextBox)sender;
+            var SearchTextBox = (TextBox)sender;
             try {
                 int Index = Int32.Parse(SearchTextBox.Text) - 1;
                 if (Index >= 0 && Index < LogListView.Items.Count) {
@@ -87,6 +91,32 @@ namespace LogViewer {
             } catch (FormatException) {
                 return;
             }
+        }
+
+        private async void PrevButton_Click(object sender, RoutedEventArgs e) {
+            await Log.SearchWorkerQueue.QueueTask(() => {
+                var log = Log.GetPrevSearchResult();
+                if (log != null) {
+                    Dispatcher.Invoke(() => {
+                        LogListView.SelectedItem = log;
+                        LogListView.ScrollIntoView(LogListView.SelectedItem);
+                        SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+                    });
+                }
+            });
+        }
+
+        private async void NextButton_Click(object sender, RoutedEventArgs e) {
+            await Log.SearchWorkerQueue.QueueTask(() => {
+                var log = Log.GetNextSearchResult();
+                if (log != null) {
+                    Dispatcher.Invoke(() => {
+                        LogListView.SelectedItem = log;
+                        LogListView.ScrollIntoView(LogListView.SelectedItem);
+                        SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+                    });
+                }
+            });
         }
     }
 
@@ -132,7 +162,7 @@ namespace LogViewer {
 
         public Log(string Text) {
             this.Text = Text;
-            this.LineNo = Log.Logs.Count + 1;
+            this.LineNo = Logs.Count + 1;
             this.LineNoText = this.LineNo.ToString();
             this.highlightState = HighlightState.NoHighlight;
             this.TryHighlight();
@@ -157,7 +187,7 @@ namespace LogViewer {
         }
 
         public static Log GetCurrentSearchResult() {
-            if (Logs.Count == 0 || SearchMatchesIndicesPos == -1) {
+            if (SearchResults.Count == 0) {
                 return null;
             }
 
@@ -169,19 +199,19 @@ namespace LogViewer {
         }
 
         public static Log GetNextSearchResult() {
-            if (Logs.Count == 0 || SearchMatchesIndicesPos == -1) {
+            if (SearchResults.Count == 0 || SearchMatchesIndicesPos >= SearchResults.Count - 1) {
                 return null;
             }
 
-            return SearchResults[SearchMatchesIndicesPos++];
+            return SearchResults[++SearchMatchesIndicesPos];
         }
 
         public static Log GetPrevSearchResult() {
-            if (Logs.Count == 0 || SearchMatchesIndicesPos <= 0) {
+            if (SearchResults.Count == 0 || SearchMatchesIndicesPos <= 0) {
                 return null;
             }
 
-            return SearchResults[SearchMatchesIndicesPos--];
+            return SearchResults[--SearchMatchesIndicesPos];
         }
 
         public static void SearchInLogs(String Text) {
@@ -192,6 +222,10 @@ namespace LogViewer {
                     Logs[i].TryHighlight();
                 }
             }
+
+            if (SearchResults.Count > 0) {
+                SearchMatchesIndicesPos = 0;
+            }
         }
 
         private static void ResetLogs() {
@@ -201,14 +235,14 @@ namespace LogViewer {
 
         public static void LoadLogFile(string Path) {
             string Line;
-            StreamReader LogFileStream = new StreamReader(Path);
+            var LogFileStream = new StreamReader(Path);
 
             ResetLogs();
 
             while ((Line = LogFileStream.ReadLine()) != null) {
-                Log.Logs.Add(new Log(Line));
+                Logs.Add(new Log(Line));
             }
-            Log.GenerateLineNoText();
+            GenerateLineNoText();
         }
 
         public static void GenerateLineNoText() {

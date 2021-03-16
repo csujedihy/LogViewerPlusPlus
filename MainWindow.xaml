@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LogViewer"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" >
+        Title="LogViewer++" Height="450" Width="800" >
     <Window.CommandBindings>
         <CommandBinding
             Command="ApplicationCommands.Open"
@@ -30,7 +30,7 @@
                     Command="ApplicationCommands.Open" />
                 <MenuItem
                     Header="_Close"
-                    Command="ApplicationCommands.Close"/>
+                    Command="ApplicationCommands.Close" />
             </MenuItem>
         </Menu>
         <ListView
@@ -59,10 +59,13 @@
                                 VerticalAlignment="Center"
                                 Margin="0,0,5,0"
                                 Foreground="Crimson" />
-                            <TextBlock
+                            <TextBox
+                                Background="Transparent"
                                 Grid.Column="1"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Center"
+                                IsReadOnly="True"
+                                BorderThickness="0"
                                 Text="{Binding Text}"
                                 Width="Auto" />
                         </Grid>
@@ -83,8 +86,8 @@
         <StackPanel Grid.Row="2" Orientation = "Horizontal">
             <TextBox x:Name="SearchBox" Margin="5" Width="150" VerticalContentAlignment="Center" TextChanged="SearchBoxTextChanged"/>
             <TextBlock x:Name="SearchResultTextBox" Margin="5" Width="Auto" Text="No results" VerticalAlignment="Center" />
-            <Button x:Name="PrevButton" Content="&#x1f844;" Margin="5, 5, 0, 5" Width="Auto" Padding="5,0,5,0"/>
-            <Button x:Name="NextButton" Content="&#x1f846;" Margin="0, 5, 5, 5" Width="Auto" Padding="5,0,5,0"/>
+            <Button x:Name="PrevButton" Content="&#x1f844;" Margin="5, 5, 0, 5" Width="Auto" Padding="5,0,5,0" Click="PrevButton_Click"/>
+            <Button x:Name="NextButton" Content="&#x1f846;" Margin="0, 5, 5, 5" Width="Auto" Padding="5,0,5,0" Click="NextButton_Click"/>
             <TextBlock Margin="5" Width="Auto" Text="Go to Line" VerticalAlignment="Center"/>
             <TextBox x:Name="GoToLineBox" Margin="5" Width="150" TextChanged="GoToLineBoxTextChanged" VerticalContentAlignment="Center"/>
         </StackPanel>

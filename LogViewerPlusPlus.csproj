@@ -6,6 +6,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>LogViewer</AssemblyName>
     <RootNamespace>LogViewer</RootNamespace>
+    <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
