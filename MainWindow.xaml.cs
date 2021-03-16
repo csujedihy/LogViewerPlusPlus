@@ -57,7 +57,7 @@ namespace LogViewer {
             } else if (e.Key == Key.G && Keyboard.Modifiers == ModifierKeys.Control) {
                 GoToLineBox.Focus();
             } else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control) {
-                SearchResultTextBox.Focus();
+                SearchBox.Focus();
             }
         }
 
@@ -252,7 +252,7 @@ namespace LogViewer {
 
         public static void SearchInLogs(String Text) {
             for (int i = 0; i < Logs.Count; ++i) {
-                if (Logs[i].Text.IndexOf(Text) != -1) {
+                if (Logs[i].Text.Contains(Text)) {
                     SearchResults.Add(Logs[i]);
                     Logs[i].highlightState |= HighlightState.SearchResultHighlight;
                     Logs[i].TryHighlight();
