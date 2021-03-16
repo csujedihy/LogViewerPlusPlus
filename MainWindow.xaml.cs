@@ -62,16 +62,15 @@ namespace LogViewer {
             string SearchTextBoxContent = SearchTextBox.Text;
 
             await Log.SearchWorkerQueue.QueueTask(() => {
-                int LeastIndex = Log.Count;
                 Log.ClearSearchResults();
                 if (SearchTextBoxContent.Length > 0) {
-                    LeastIndex = Log.SearchInLogs(SearchTextBoxContent);
+                    Log.SearchInLogs(SearchTextBoxContent);
                 }
 
-                if (LeastIndex < Log.Count) {
+                if (Log.GetCurrentSearchResult() != null) {
                     this.Dispatcher.Invoke(() => {
-                        LogListView.ScrollIntoView(LogListView.Items[LeastIndex]);
-                        LogListView.SelectedItem = LogListView.Items[LeastIndex];
+                        LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
+                        LogListView.SelectedItem = Log.GetCurrentSearchResult();
                     });
                 }
             });
@@ -123,20 +122,19 @@ namespace LogViewer {
         }
         private HighlightState highlightState = HighlightState.NoHighlight;
         public int LineNo;
-        public static int Count;
         public static ObservableCollection<Log> Logs = new ObservableCollection<Log>();
-        public static HashSet<int> SearchMatchedIndices = new HashSet<int>();
+        public static List<Log> SearchResults = new List<Log>();
+        private static int SearchMatchesIndicesPos = -1;
         public static BackgroundQueue SearchWorkerQueue = new BackgroundQueue();
         public static ControlStyleSchema ControlStyleSchema = new ControlStyleSchema(ColorTheme.LightTheme);
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         public Log(string Text) {
-            ++Count;
             this.Text = Text;
-            this.LineNo = Count;
+            this.LineNo = Log.Logs.Count + 1;
             this.LineNoText = this.LineNo.ToString();
-            highlightState = HighlightState.NoHighlight;
+            this.highlightState = HighlightState.NoHighlight;
             this.TryHighlight();
         }
 
@@ -151,30 +149,54 @@ namespace LogViewer {
         }
 
         public static void ClearSearchResults() {
-            foreach (var i in SearchMatchedIndices) {
-                Logs[i].highlightState &= ~HighlightState.SearchResultHighlight;
-                Logs[i].TryHighlight();
+            foreach (var log in SearchResults) {
+                log.highlightState &= ~HighlightState.SearchResultHighlight;
+                log.TryHighlight();
             }
-            SearchMatchedIndices.Clear();
+            SearchResults.Clear();
         }
 
-        public static int SearchInLogs(String Text) {
-            int LeastIndex = Count;
-            for (int i = 0; i < Count; ++i) {
+        public static Log GetCurrentSearchResult() {
+            if (Logs.Count == 0 || SearchMatchesIndicesPos == -1) {
+                return null;
+            }
+
+            return SearchResults[SearchMatchesIndicesPos];
+        }
+
+        public static int GetCurrentSearchResultIndex() {
+            return SearchMatchesIndicesPos;
+        }
+
+        public static Log GetNextSearchResult() {
+            if (Logs.Count == 0 || SearchMatchesIndicesPos == -1) {
+                return null;
+            }
+
+            return SearchResults[SearchMatchesIndicesPos++];
+        }
+
+        public static Log GetPrevSearchResult() {
+            if (Logs.Count == 0 || SearchMatchesIndicesPos <= 0) {
+                return null;
+            }
+
+            return SearchResults[SearchMatchesIndicesPos--];
+        }
+
+        public static void SearchInLogs(String Text) {
+            for (int i = 0; i < Logs.Count; ++i) {
                 if (Logs[i].Text.IndexOf(Text) != -1) {
-                    LeastIndex = Math.Min(LeastIndex, i);
-                    SearchMatchedIndices.Add(i);
+                    SearchResults.Add(Logs[i]);
                     Logs[i].highlightState |= HighlightState.SearchResultHighlight;
                     Logs[i].TryHighlight();
                 }
             }
-            return LeastIndex;
         }
 
         private static void ResetLogs() {
             ClearSearchResults();
             Logs.Clear();
-            Count = 0;
         }
 
         public static void LoadLogFile(string Path) {
