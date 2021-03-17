@@ -9,6 +9,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -143,13 +145,23 @@ namespace LogViewer {
             }
         }
 
-        private void CaseSensitiveToggle_Click(object sender, RoutedEventArgs e) {
+        private async void CaseSensitiveToggle_Click(object sender, RoutedEventArgs e) {
             var toggleButton = sender as ToggleButton;
             if (toggleButton.IsChecked == null) {
                 Log.SearchCaseSensitive = false;
             } else {
                 Log.SearchCaseSensitive = (bool)toggleButton.IsChecked;
             }
+            await Log.WorkerQueue.QueueTask(() => {
+                var log = Log.GetNextSearchResult();
+                if (log != null) {
+                    Dispatcher.Invoke(() => {
+                        LogListView.SelectedItem = log;
+                        LogListView.ScrollIntoView(LogListView.SelectedItem);
+                        SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+                    });
+                }
+            });
         }
 
         private void LogListView_Drop(object sender, DragEventArgs e) {
@@ -157,7 +169,7 @@ namespace LogViewer {
                 string[] Path = (string[])e.Data.GetData(DataFormats.FileDrop);
                 if (Path.Length > 1) {
                     MessageBox.Show(
-                        "We only accept one log file at a time",
+                        "We only accept one log file at a time.",
                         Title,
                         MessageBoxButton.OK,
                         MessageBoxImage.Error,
@@ -165,7 +177,11 @@ namespace LogViewer {
                     return;
                 }
 
-                Log.LoadLogFile(Path[0]);
+                new Thread(() => {
+                    Dispatcher.Invoke(() => {
+                        Log.LoadLogFile(Path[0]);
+                    });
+                }).Start();
             }
         }
     }

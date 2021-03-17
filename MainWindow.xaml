@@ -47,7 +47,7 @@
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Border Padding="2" Width="Auto" Background="{Binding LogRowBgColor}">
-                        <Grid>
+                        <Grid Height="25">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
