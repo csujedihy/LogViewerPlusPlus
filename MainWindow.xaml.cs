@@ -152,13 +152,26 @@ namespace LogViewer {
             } else {
                 Log.SearchCaseSensitive = (bool)toggleButton.IsChecked;
             }
+            string SearchTextBoxContent = SearchBox.Text;
+
             await Log.WorkerQueue.QueueTask(() => {
-                var log = Log.GetNextSearchResult();
-                if (log != null) {
+                Log.ClearSearchResults();
+                if (SearchTextBoxContent.Length > 0)
+                {
+                    Log.SearchInLogs(SearchTextBoxContent);
+                    if (Log.GetCurrentSearchResult() != null)
+                    {
+                        Dispatcher.Invoke(() => {
+                            SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+                            LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
+                            LogListView.SelectedItem = Log.GetCurrentSearchResult();
+                        });
+                    }
+                }
+                else
+                {
                     Dispatcher.Invoke(() => {
-                        LogListView.SelectedItem = log;
-                        LogListView.ScrollIntoView(LogListView.SelectedItem);
-                        SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+                        SearchResultTextBox.Text = "No results";
                     });
                 }
             });
@@ -296,9 +309,9 @@ namespace LogViewer {
 
         private static bool SearchInLogText(string Text, string TargetText) {
             if (SearchCaseSensitive) {
-                return Text.Contains(TargetText);
+                return Text.Contains(TargetText, StringComparison.Ordinal);
             } else {
-                return Text.IndexOf(TargetText) != -1;
+                return Text.Contains(TargetText, StringComparison.OrdinalIgnoreCase);
             }
         }
 
