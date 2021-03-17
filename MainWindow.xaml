@@ -41,7 +41,9 @@
                 Width="Auto"
                 ScrollViewer.HorizontalScrollBarVisibility="Visible"
                 SelectionChanged="LogListView_SelectionChanged"
-                HorizontalAlignment="Stretch">
+                HorizontalAlignment="Stretch"
+                Drop="LogListView_Drop"
+                AllowDrop="true">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Border Padding="2" Width="Auto" Background="{Binding LogRowBgColor}">

@@ -151,11 +151,28 @@ namespace LogViewer {
                 Log.SearchCaseSensitive = (bool)toggleButton.IsChecked;
             }
         }
+
+        private void LogListView_Drop(object sender, DragEventArgs e) {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop)) {
+                string[] Path = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (Path.Length > 1) {
+                    MessageBox.Show(
+                        "We only accept one log file at a time",
+                        Title,
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error,
+                        MessageBoxResult.No);
+                    return;
+                }
+
+                Log.LoadLogFile(Path[0]);
+            }
+        }
     }
 
     public class Log : INotifyPropertyChanged {
         [Flags]
-        enum HighlightState { 
+        enum HighlightState {
             NoHighlight = 0,
             SearchResultHighlight = 1,
             SelectedHighlight = 2,
