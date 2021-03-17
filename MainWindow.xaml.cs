@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 
 namespace LogViewer {
@@ -141,6 +142,15 @@ namespace LogViewer {
                 log.TextSelectableBoxVisibility = Visibility.Hidden;
             }
         }
+
+        private void CaseSensitiveToggle_Click(object sender, RoutedEventArgs e) {
+            var toggleButton = sender as ToggleButton;
+            if (toggleButton.IsChecked == null) {
+                Log.SearchCaseSensitive = false;
+            } else {
+                Log.SearchCaseSensitive = (bool)toggleButton.IsChecked;
+            }
+        }
     }
 
     public class Log : INotifyPropertyChanged {
@@ -191,6 +201,7 @@ namespace LogViewer {
         public static BackgroundQueue WorkerQueue = new BackgroundQueue();
         public static ControlStyleSchema ControlStyleSchema = new ControlStyleSchema(ColorTheme.LightTheme);
         public static Log LogInTextSelectionState;
+        public static bool SearchCaseSensitive = false;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -250,9 +261,17 @@ namespace LogViewer {
             return SearchResults[--SearchMatchesIndicesPos];
         }
 
+        private static bool SearchInLogText(string Text, string TargetText) {
+            if (SearchCaseSensitive) {
+                return Text.Contains(TargetText);
+            } else {
+                return Text.IndexOf(TargetText) != -1;
+            }
+        }
+
         public static void SearchInLogs(String Text) {
             for (int i = 0; i < Logs.Count; ++i) {
-                if (Logs[i].Text.Contains(Text)) {
+                if (SearchInLogText(Logs[i].Text, Text)) {
                     SearchResults.Add(Logs[i]);
                     Logs[i].highlightState |= HighlightState.SearchResultHighlight;
                     Logs[i].TryHighlight();

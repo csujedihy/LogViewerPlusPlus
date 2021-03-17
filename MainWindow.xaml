@@ -94,6 +94,7 @@
         <StackPanel Grid.Row="2" Orientation = "Horizontal">
             <TextBox x:Name="SearchBox" Margin="5" Width="150" VerticalContentAlignment="Center" TextChanged="SearchBoxTextChanged"/>
             <TextBlock x:Name="SearchResultTextBox" Margin="5" Width="Auto" Text="No results" VerticalAlignment="Center" />
+            <ToggleButton x:Name="CaseSensitiveToggle" IsChecked="False" IsThreeState="False" Content="Aa" Margin="5, 5, 0, 5" Width="Auto" Padding="5,0,5,0" Click="CaseSensitiveToggle_Click"/>
             <Button x:Name="PrevButton" Content="&#x1f844;" Margin="5, 5, 0, 5" Width="Auto" Padding="5,0,5,0" Click="PrevButton_Click"/>
             <Button x:Name="NextButton" Content="&#x1f846;" Margin="0, 5, 5, 5" Width="Auto" Padding="5,0,5,0" Click="NextButton_Click"/>
             <TextBlock Margin="5" Width="Auto" Text="Go to Line" VerticalAlignment="Center"/>
