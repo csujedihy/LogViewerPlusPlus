@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -147,11 +148,12 @@ namespace LogViewer {
 
         private async void CaseSensitiveToggle_Click(object sender, RoutedEventArgs e) {
             var toggleButton = sender as ToggleButton;
-            if (toggleButton.IsChecked == null) {
-                Log.SearchCaseSensitive = false;
+            if ((bool)toggleButton.IsChecked) {
+                Log.SearchMode |= Log.LogSearchMode.CaseSensitive;
             } else {
-                Log.SearchCaseSensitive = (bool)toggleButton.IsChecked;
+                Log.SearchMode &= ~Log.LogSearchMode.CaseSensitive;
             }
+
             string SearchTextBoxContent = SearchBox.Text;
 
             await Log.WorkerQueue.QueueTask(() => {
@@ -170,6 +172,35 @@ namespace LogViewer {
                 }
                 else
                 {
+                    Dispatcher.Invoke(() => {
+                        SearchResultTextBox.Text = "No results";
+                    });
+                }
+            });
+        }
+
+        private async void RegexToggle_Click(object sender, RoutedEventArgs e) {
+            var toggleButton = sender as ToggleButton;
+            if ((bool)toggleButton.IsChecked) {
+                Log.SearchMode |= Log.LogSearchMode.Regex;
+            } else {
+                Log.SearchMode &= ~Log.LogSearchMode.Regex;
+            }
+
+            string SearchTextBoxContent = SearchBox.Text;
+
+            await Log.WorkerQueue.QueueTask(() => {
+                Log.ClearSearchResults();
+                if (SearchTextBoxContent.Length > 0) {
+                    Log.SearchInLogs(SearchTextBoxContent);
+                    if (Log.GetCurrentSearchResult() != null) {
+                        Dispatcher.Invoke(() => {
+                            SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+                            LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
+                            LogListView.SelectedItem = Log.GetCurrentSearchResult();
+                        });
+                    }
+                } else {
                     Dispatcher.Invoke(() => {
                         SearchResultTextBox.Text = "No results";
                     });
@@ -205,6 +236,13 @@ namespace LogViewer {
             NoHighlight = 0,
             SearchResultHighlight = 1,
             SelectedHighlight = 2,
+        };
+        [Flags]
+        public enum LogSearchMode
+        {
+            None = 0,
+            CaseSensitive = 1,
+            Regex = 2,
         };
         public string Text { get; set; }
         public string LineNoText { get; set; }
@@ -247,7 +285,7 @@ namespace LogViewer {
         public static BackgroundQueue WorkerQueue = new BackgroundQueue();
         public static ControlStyleSchema ControlStyleSchema = new ControlStyleSchema(ColorTheme.LightTheme);
         public static Log LogInTextSelectionState;
-        public static bool SearchCaseSensitive = false;
+        public static LogSearchMode SearchMode = LogSearchMode.None;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -308,10 +346,16 @@ namespace LogViewer {
         }
 
         private static bool SearchInLogText(string Text, string TargetText) {
-            if (SearchCaseSensitive) {
-                return Text.Contains(TargetText, StringComparison.Ordinal);
+            bool IgnoreCase = ((SearchMode & LogSearchMode.CaseSensitive) == 0);
+            if ((SearchMode & LogSearchMode.Regex) != 0) {
+                return Regex.IsMatch(
+                    Text, TargetText,
+                    RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
             } else {
-                return Text.Contains(TargetText, StringComparison.OrdinalIgnoreCase);
+                return
+                    Text.Contains(
+                        TargetText,
+                        IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
             }
         }
 
