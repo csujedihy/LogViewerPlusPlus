@@ -83,6 +83,10 @@ namespace LogViewer {
                             LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
                             LogListView.SelectedItem = Log.GetCurrentSearchResult();
                         });
+                    } else {
+                        Dispatcher.Invoke(() => {
+                            SearchResultTextBox.Text = "No results";
+                        });
                     }
                 } else {
                     Dispatcher.Invoke(() => {
@@ -179,6 +183,35 @@ namespace LogViewer {
             });
         }
 
+        private async void ExactMatchToggle_Click(object sender, RoutedEventArgs e) {
+            var toggleButton = sender as ToggleButton;
+            if ((bool)toggleButton.IsChecked) {
+                Log.SearchMode |= Log.LogSearchMode.ExactMatch;
+            } else {
+                Log.SearchMode &= ~Log.LogSearchMode.ExactMatch;
+            }
+
+            string SearchTextBoxContent = SearchBox.Text;
+
+            await Log.WorkerQueue.QueueTask(() => {
+                Log.ClearSearchResults();
+                if (SearchTextBoxContent.Length > 0) {
+                    Log.SearchInLogs(SearchTextBoxContent);
+                    if (Log.GetCurrentSearchResult() != null) {
+                        Dispatcher.Invoke(() => {
+                            SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+                            LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
+                            LogListView.SelectedItem = Log.GetCurrentSearchResult();
+                        });
+                    }
+                } else {
+                    Dispatcher.Invoke(() => {
+                        SearchResultTextBox.Text = "No results";
+                    });
+                }
+            });
+        }
+
         private async void RegexToggle_Click(object sender, RoutedEventArgs e) {
             var toggleButton = sender as ToggleButton;
             if ((bool)toggleButton.IsChecked) {
@@ -243,6 +276,7 @@ namespace LogViewer {
             None = 0,
             CaseSensitive = 1,
             Regex = 2,
+            ExactMatch = 4,
         };
         public string Text { get; set; }
         public string LineNoText { get; set; }
@@ -345,16 +379,22 @@ namespace LogViewer {
             return SearchResults[--SearchMatchesIndicesPos];
         }
 
-        private static bool SearchInLogText(string Text, string TargetText) {
+        private static bool SearchInLogText(string Text, string Pattern) {
             bool IgnoreCase = ((SearchMode & LogSearchMode.CaseSensitive) == 0);
             if ((SearchMode & LogSearchMode.Regex) != 0) {
                 return Regex.IsMatch(
-                    Text, TargetText,
+                    Text, Pattern,
+                    RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
+            } else if ((SearchMode & LogSearchMode.ExactMatch) != 0) {
+                var FinalPattern = String.Format(@"\b{0}", Regex.Escape(Pattern));
+                Debug.WriteLine(FinalPattern);
+                return Regex.IsMatch(
+                    Text, FinalPattern,
                     RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
             } else {
                 return
                     Text.Contains(
-                        TargetText,
+                        Pattern,
                         IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
             }
         }

@@ -14,16 +14,78 @@
             Command="ApplicationCommands.Close"
             Executed="CloseCommandHandler" />
     </Window.CommandBindings>
+    <Window.Resources>
+        <Style x:Key="ToolLabelStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="VerticalAlignment" Value="Center"></Setter>
+            <Setter Property="Margin" Value="5"></Setter>
+            <Setter Property="Width" Value="Auto"></Setter>
+        </Style>
+        <Style x:Key="ToolsSeparatorStyle" TargetType="{x:Type Border}">
+            <Setter Property="Background" Value="Silver"></Setter>
+            <Setter Property="Margin" Value="10,3,10,3"></Setter>
+            <Setter Property="Width" Value="1"></Setter>
+        </Style>
+        <Style x:Key="SearchNavButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Margin" Value="0,3,0,3"></Setter>
+            <Setter Property="Padding" Value="5,0,5,0"></Setter>
+            <Setter Property="BorderThickness" Value="0"></Setter>
+            <Setter Property="Width" Value="Auto"></Setter>
+            <Style.Triggers>
+                <Trigger  Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="SkyBlue"></Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="SearchModeToggleStyle" TargetType="{x:Type ToggleButton}">
+            <Setter Property="Background" Value="Transparent"></Setter>
+            <Setter Property="FontWeight" Value="DemiBold"></Setter>
+            <Setter Property="BorderThickness" Value="0"></Setter>
+            <Setter Property="Width" Value="25"></Setter>
+            <Setter Property="IsChecked" Value="False"></Setter>
+            <Setter Property="IsThreeState" Value="False"></Setter>
+        </Style>
+        <Style x:Key="TextboxContainerStyle" TargetType="{x:Type Border}">
+            <Setter Property="CornerRadius" Value="2"></Setter>
+            <Setter Property="BorderBrush" Value="Silver"></Setter>
+            <Setter Property="BorderThickness" Value="1"></Setter>
+            <Setter Property="Margin" Value="5, 3, 0, 3"></Setter>
+            <Style.Triggers>
+                <Trigger  Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="SkyBlue"></Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="GoToLineBoxStyle" TargetType="{x:Type TextBox}">
+            <Setter Property="Background" Value="Transparent"></Setter>
+            <Setter Property="BorderThickness" Value="0"></Setter>
+            <Setter Property="Width" Value="150"></Setter>
+            <Setter Property="Margin" Value="0"></Setter>
+            <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
+            <Style.Triggers>
+                <Trigger  Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="SkyBlue"></Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="SearchBoxStyle" TargetType="{x:Type TextBox}">
+            <Setter Property="Background" Value="Transparent"></Setter>
+            <Setter Property="Text" Value="Find"></Setter>
+            <Setter Property="BorderThickness" Value="0"></Setter>
+            <Setter Property="Margin" Value="0, 0, 0, 0"></Setter>
+            <Setter Property="Width" Value="200"></Setter>
+            <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
+        </Style>
+    </Window.Resources>
     <Grid x:Name="MainGrid">
         <Grid.RowDefinitions>
-            <RowDefinition Height="20" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="30" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <Menu>
+        <Menu Padding="2">
             <MenuItem Header="File">
                 <MenuItem
                     Header="_Open"
@@ -94,14 +156,37 @@
             </ListView.ItemContainerStyle>
         </ListView>
         <StackPanel Grid.Row="2" Orientation = "Horizontal">
-            <TextBox x:Name="SearchBox" Margin="5" Width="150" VerticalContentAlignment="Center" TextChanged="SearchBoxTextChanged"/>
-            <TextBlock x:Name="SearchResultTextBox" Margin="5" Width="Auto" Text="No results" VerticalAlignment="Center" />
-            <ToggleButton x:Name="CaseSensitiveToggle" IsChecked="False" IsThreeState="False" Content="Aa" Margin="5, 5, 0, 5" Width="25" Padding="5,0,5,0" Click="CaseSensitiveToggle_Click"/>
-            <ToggleButton x:Name="RegexToggle" IsChecked="False" IsThreeState="False" Content=".*" Margin="5, 5, 0, 5" Width="25" Padding="5,0,5,0" Click="RegexToggle_Click"/>
-            <Button x:Name="PrevButton" Content="&#x1f844;" Margin="5, 5, 0, 5" Width="Auto" Padding="5,0,5,0" Click="PrevButton_Click"/>
-            <Button x:Name="NextButton" Content="&#x1f846;" Margin="0, 5, 5, 5" Width="Auto" Padding="5,0,5,0" Click="NextButton_Click"/>
-            <TextBlock Margin="5" Width="Auto" Text="Go to Line" VerticalAlignment="Center"/>
-            <TextBox x:Name="GoToLineBox" Margin="5" Width="150" TextChanged="GoToLineBoxTextChanged" VerticalContentAlignment="Center"/>
+            <Border Style="{StaticResource TextboxContainerStyle}">
+                <StackPanel Orientation = "Horizontal">
+                    <TextBox x:Name="SearchBox" Style="{StaticResource SearchBoxStyle}" TextChanged="SearchBoxTextChanged"/>
+                    <ToggleButton
+                        x:Name="CaseSensitiveToggle"
+                        Content="Aa"
+                        Click="CaseSensitiveToggle_Click"
+                        Style="{StaticResource SearchModeToggleStyle}"
+                        ToolTip="Case senstive search"/>
+                    <ToggleButton
+                        x:Name="ExactMatchToggle"
+                        Content="Ex"
+                        Click="ExactMatchToggle_Click"
+                        Style="{StaticResource SearchModeToggleStyle}"
+                        ToolTip="Whole word match"/>
+                    <ToggleButton
+                        x:Name="RegexToggle"
+                        Content=".*"
+                        Click="RegexToggle_Click"
+                        Style="{StaticResource SearchModeToggleStyle}"
+                        ToolTip="Regex"/>
+                </StackPanel>
+            </Border>
+            <TextBlock x:Name="SearchResultTextBox" Text="No results" Style="{StaticResource ToolLabelStyle}" />
+            <Button x:Name="PrevButton" Content="&#x1f844;" Click="PrevButton_Click" Style="{StaticResource SearchNavButtonStyle}" ToolTip="Next result"/>
+            <Button x:Name="NextButton" Content="&#x1f846;" Click="NextButton_Click" Style="{StaticResource SearchNavButtonStyle}" ToolTip="Previous result"/>
+            <Border Style="{StaticResource ToolsSeparatorStyle}"/>
+            <TextBlock Text="Go to Line" Style="{StaticResource ToolLabelStyle}"/>
+            <Border Style="{StaticResource TextboxContainerStyle}">
+                <TextBox x:Name="GoToLineBox" TextChanged="GoToLineBoxTextChanged" Style="{StaticResource GoToLineBoxStyle}"/>
+            </Border>
         </StackPanel>
     </Grid>
 </Window>
