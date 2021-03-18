@@ -30,19 +30,22 @@
             <Setter Property="Padding" Value="5,0,5,0"></Setter>
             <Setter Property="BorderThickness" Value="0"></Setter>
             <Setter Property="Width" Value="Auto"></Setter>
-            <Style.Triggers>
-                <Trigger  Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="SkyBlue"></Setter>
-                </Trigger>
-            </Style.Triggers>
         </Style>
         <Style x:Key="SearchModeToggleStyle" TargetType="{x:Type ToggleButton}">
             <Setter Property="Background" Value="Transparent"></Setter>
-            <Setter Property="FontWeight" Value="DemiBold"></Setter>
+            <Setter Property="FontWeight" Value="Normal"></Setter>
             <Setter Property="BorderThickness" Value="0"></Setter>
+            <Setter Property="FontWeight" Value="DemiBold"></Setter>
+            <Setter Property="Foreground" Value="Silver"></Setter>
             <Setter Property="Width" Value="25"></Setter>
             <Setter Property="IsChecked" Value="False"></Setter>
             <Setter Property="IsThreeState" Value="False"></Setter>
+            <Style.Triggers>
+                <Trigger  Property="IsChecked" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"></Setter>
+                    <Setter Property="Foreground" Value="Black"></Setter>
+                </Trigger>
+            </Style.Triggers>
         </Style>
         <Style x:Key="TextboxContainerStyle" TargetType="{x:Type Border}">
             <Setter Property="CornerRadius" Value="2"></Setter>
@@ -59,7 +62,7 @@
             <Setter Property="Background" Value="Transparent"></Setter>
             <Setter Property="BorderThickness" Value="0"></Setter>
             <Setter Property="Width" Value="150"></Setter>
-            <Setter Property="Margin" Value="0"></Setter>
+            <Setter Property="Margin" Value="5,0,5,0"></Setter>
             <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
             <Style.Triggers>
                 <Trigger  Property="IsMouseOver" Value="True">
@@ -69,9 +72,8 @@
         </Style>
         <Style x:Key="SearchBoxStyle" TargetType="{x:Type TextBox}">
             <Setter Property="Background" Value="Transparent"></Setter>
-            <Setter Property="Text" Value="Find"></Setter>
             <Setter Property="BorderThickness" Value="0"></Setter>
-            <Setter Property="Margin" Value="0, 0, 0, 0"></Setter>
+            <Setter Property="Margin" Value="5, 0, 5, 0"></Setter>
             <Setter Property="Width" Value="200"></Setter>
             <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
         </Style>

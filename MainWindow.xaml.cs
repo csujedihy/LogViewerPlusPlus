@@ -162,8 +162,7 @@ namespace LogViewer {
 
             await Log.WorkerQueue.QueueTask(() => {
                 Log.ClearSearchResults();
-                if (SearchTextBoxContent.Length > 0)
-                {
+                if (SearchTextBoxContent.Length > 0) {
                     Log.SearchInLogs(SearchTextBoxContent);
                     if (Log.GetCurrentSearchResult() != null)
                     {
@@ -171,6 +170,10 @@ namespace LogViewer {
                             SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
                             LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
                             LogListView.SelectedItem = Log.GetCurrentSearchResult();
+                        });
+                    } else {
+                        Dispatcher.Invoke(() => {
+                            SearchResultTextBox.Text = "No results";
                         });
                     }
                 }
@@ -186,9 +189,9 @@ namespace LogViewer {
         private async void ExactMatchToggle_Click(object sender, RoutedEventArgs e) {
             var toggleButton = sender as ToggleButton;
             if ((bool)toggleButton.IsChecked) {
-                Log.SearchMode |= Log.LogSearchMode.ExactMatch;
+                Log.SearchMode |= Log.LogSearchMode.WholeWordMatch;
             } else {
-                Log.SearchMode &= ~Log.LogSearchMode.ExactMatch;
+                Log.SearchMode &= ~Log.LogSearchMode.WholeWordMatch;
             }
 
             string SearchTextBoxContent = SearchBox.Text;
@@ -202,6 +205,10 @@ namespace LogViewer {
                             SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
                             LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
                             LogListView.SelectedItem = Log.GetCurrentSearchResult();
+                        });
+                    } else {
+                        Dispatcher.Invoke(() => {
+                            SearchResultTextBox.Text = "No results";
                         });
                     }
                 } else {
@@ -231,6 +238,10 @@ namespace LogViewer {
                             SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
                             LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
                             LogListView.SelectedItem = Log.GetCurrentSearchResult();
+                        });
+                    } else {
+                        Dispatcher.Invoke(() => {
+                            SearchResultTextBox.Text = "No results";
                         });
                     }
                 } else {
@@ -276,7 +287,7 @@ namespace LogViewer {
             None = 0,
             CaseSensitive = 1,
             Regex = 2,
-            ExactMatch = 4,
+            WholeWordMatch = 4,
         };
         public string Text { get; set; }
         public string LineNoText { get; set; }
@@ -385,9 +396,12 @@ namespace LogViewer {
                 return Regex.IsMatch(
                     Text, Pattern,
                     RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
-            } else if ((SearchMode & LogSearchMode.ExactMatch) != 0) {
-                var FinalPattern = String.Format(@"\b{0}", Regex.Escape(Pattern));
-                Debug.WriteLine(FinalPattern);
+            } else if ((SearchMode & LogSearchMode.WholeWordMatch) != 0) {
+                // The simple algorithm here is use \b<regex>\b to find the whole word match.
+                // If the first character or the last character is a separator, then remove the corresponding \b.
+                var leftPattern = char.IsPunctuation(Text[0]) ? @"" : @"\b";
+                var rightPattern = char.IsPunctuation(Text[Text.Length - 1]) ? @"" : @"\b";
+                var FinalPattern = string.Format(@"{0}{1}{2}", leftPattern, Regex.Escape(Pattern), rightPattern);
                 return Regex.IsMatch(
                     Text, FinalPattern,
                     RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
@@ -401,7 +415,7 @@ namespace LogViewer {
 
         public static void SearchInLogs(String Text) {
             for (int i = 0; i < Logs.Count; ++i) {
-                if (SearchInLogText(Logs[i].Text, Text)) {
+                if (Logs[i].Text.Length > 0 && SearchInLogText(Logs[i].Text, Text)) {
                     SearchResults.Add(Logs[i]);
                     Logs[i].highlightState |= HighlightState.SearchResultHighlight;
                     Logs[i].TryHighlight();
