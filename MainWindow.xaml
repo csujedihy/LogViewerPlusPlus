@@ -43,7 +43,7 @@
             <Style.Triggers>
                 <Trigger  Property="IsChecked" Value="True">
                     <Setter Property="FontWeight" Value="Bold"></Setter>
-                    <Setter Property="Foreground" Value="Black"></Setter>
+                    <Setter Property="Foreground" Value="SteelBlue"></Setter>
                 </Trigger>
             </Style.Triggers>
         </Style>

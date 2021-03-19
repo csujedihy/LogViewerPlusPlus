@@ -438,7 +438,6 @@ namespace LogViewer {
             var LogFileStream = new StreamReader(Path);
             Debug.WriteLine("Load log file...");
             ResetLogs();
-
             while ((Line = LogFileStream.ReadLine()) != null) {
                 Logs.Add(new Log(Line));
             }
