@@ -315,7 +315,7 @@ namespace LogViewer {
                 // The simple algorithm here is use \b<regex>\b to find the whole word match.
                 // If the first character or the last character is a separator, then remove the corresponding \b.
                 var leftPattern = char.IsPunctuation(Text[0]) ? @"" : @"\b";
-                var rightPattern = char.IsPunctuation(Text[Text.Length - 1]) ? @"" : @"\b";
+                var rightPattern = char.IsPunctuation(Text[^1]) ? @"" : @"\b";
                 var FinalPattern = string.Format(@"{0}{1}{2}", leftPattern, Regex.Escape(Pattern), rightPattern);
                 return Regex.IsMatch(
                     Text, FinalPattern,
@@ -330,7 +330,7 @@ namespace LogViewer {
 
         public static async void SearchInLogs(String Text, Action<Log> action) {
             await WorkerQueue.QueueTask(() => {
-                Log.ClearSearchResults();
+                ClearSearchResults();
 
                 if (Text.Length > 0) {
                     for (int i = 0; i < Logs.Count; ++i) {
@@ -346,12 +346,12 @@ namespace LogViewer {
                     SearchMatchesIndicesPos = 0;
                 }
 
-                action(Log.GetCurrentSearchResult());
+                action(GetCurrentSearchResult());
             });
         }
 
         private static void ResetLogs() {
-            Log.LogInTextSelectionState = null;
+            LogInTextSelectionState = null;
             ClearSearchResults();
             Logs.Clear();
         }
