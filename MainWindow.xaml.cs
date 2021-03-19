@@ -58,33 +58,6 @@ namespace LogViewer {
             Close();
         }
 
-        private async void SearchBoxTextChanged(object sender, TextChangedEventArgs e) {
-            var SearchTextBox = (TextBox)sender;
-            string SearchTextBoxContent = SearchTextBox.Text;
-
-            await Log.WorkerQueue.QueueTask(() => {
-                Log.ClearSearchResults();
-                if (SearchTextBoxContent.Length > 0) {
-                    Log.SearchInLogs(SearchTextBoxContent);
-                    if (Log.GetCurrentSearchResult() != null) {
-                        Dispatcher.Invoke(() => {
-                            SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
-                            LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
-                            LogListView.SelectedItem = Log.GetCurrentSearchResult();
-                        });
-                    } else {
-                        Dispatcher.Invoke(() => {
-                            SearchResultTextBox.Text = "No results";
-                        });
-                    }
-                } else {
-                    Dispatcher.Invoke(() => {
-                        SearchResultTextBox.Text = "No results";
-                    });
-                }
-            });
-        }
-
         private void GoToLineBoxTextChanged(object sender, TextChangedEventArgs e) {
             var SearchTextBox = (TextBox)sender;
             try {
@@ -139,7 +112,27 @@ namespace LogViewer {
             }
         }
 
-        private async void CaseSensitiveToggle_Click(object sender, RoutedEventArgs e) {
+        private void UpdateSearchResult(Log log) {
+            Dispatcher.Invoke(() => {
+                if (log != null) {
+                    SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+                    LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
+                    LogListView.SelectedItem = Log.GetCurrentSearchResult();
+                } else {
+                    Dispatcher.Invoke(() => {
+                        SearchResultTextBox.Text = "No results";
+                    });
+                }
+            });
+        }
+
+        private void SearchBoxTextChanged(object sender, TextChangedEventArgs e) {
+            var SearchTextBox = (TextBox)sender;
+            string SearchTextBoxContent = SearchTextBox.Text;
+            Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
+        }
+
+        private void CaseSensitiveToggle_Click(object sender, RoutedEventArgs e) {
             var toggleButton = sender as ToggleButton;
             if ((bool)toggleButton.IsChecked) {
                 Log.SearchMode |= Log.LogSearchMode.CaseSensitive;
@@ -148,31 +141,10 @@ namespace LogViewer {
             }
 
             string SearchTextBoxContent = SearchBox.Text;
-
-            await Log.WorkerQueue.QueueTask(() => {
-                Log.ClearSearchResults();
-                if (SearchTextBoxContent.Length > 0) {
-                    Log.SearchInLogs(SearchTextBoxContent);
-                    if (Log.GetCurrentSearchResult() != null) {
-                        Dispatcher.Invoke(() => {
-                            SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
-                            LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
-                            LogListView.SelectedItem = Log.GetCurrentSearchResult();
-                        });
-                    } else {
-                        Dispatcher.Invoke(() => {
-                            SearchResultTextBox.Text = "No results";
-                        });
-                    }
-                } else {
-                    Dispatcher.Invoke(() => {
-                        SearchResultTextBox.Text = "No results";
-                    });
-                }
-            });
+            Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
         }
 
-        private async void ExactMatchToggle_Click(object sender, RoutedEventArgs e) {
+        private void ExactMatchToggle_Click(object sender, RoutedEventArgs e) {
             var toggleButton = sender as ToggleButton;
             if ((bool)toggleButton.IsChecked) {
                 Log.SearchMode |= Log.LogSearchMode.WholeWordMatch;
@@ -181,31 +153,10 @@ namespace LogViewer {
             }
 
             string SearchTextBoxContent = SearchBox.Text;
-
-            await Log.WorkerQueue.QueueTask(() => {
-                Log.ClearSearchResults();
-                if (SearchTextBoxContent.Length > 0) {
-                    Log.SearchInLogs(SearchTextBoxContent);
-                    if (Log.GetCurrentSearchResult() != null) {
-                        Dispatcher.Invoke(() => {
-                            SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
-                            LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
-                            LogListView.SelectedItem = Log.GetCurrentSearchResult();
-                        });
-                    } else {
-                        Dispatcher.Invoke(() => {
-                            SearchResultTextBox.Text = "No results";
-                        });
-                    }
-                } else {
-                    Dispatcher.Invoke(() => {
-                        SearchResultTextBox.Text = "No results";
-                    });
-                }
-            });
+            Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
         }
 
-        private async void RegexToggle_Click(object sender, RoutedEventArgs e) {
+        private void RegexToggle_Click(object sender, RoutedEventArgs e) {
             var toggleButton = sender as ToggleButton;
             if ((bool)toggleButton.IsChecked) {
                 Log.SearchMode |= Log.LogSearchMode.Regex;
@@ -214,28 +165,7 @@ namespace LogViewer {
             }
 
             string SearchTextBoxContent = SearchBox.Text;
-
-            await Log.WorkerQueue.QueueTask(() => {
-                Log.ClearSearchResults();
-                if (SearchTextBoxContent.Length > 0) {
-                    Log.SearchInLogs(SearchTextBoxContent);
-                    if (Log.GetCurrentSearchResult() != null) {
-                        Dispatcher.Invoke(() => {
-                            SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
-                            LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
-                            LogListView.SelectedItem = Log.GetCurrentSearchResult();
-                        });
-                    } else {
-                        Dispatcher.Invoke(() => {
-                            SearchResultTextBox.Text = "No results";
-                        });
-                    }
-                } else {
-                    Dispatcher.Invoke(() => {
-                        SearchResultTextBox.Text = "No results";
-                    });
-                }
-            });
+            Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
         }
 
         private void LogListView_Drop(object sender, DragEventArgs e) {
@@ -309,11 +239,11 @@ namespace LogViewer {
         }
         private HighlightState highlightState = HighlightState.NoHighlight;
         public int LineNo;
-        public static SmartCollection<Log> Logs = new SmartCollection<Log>();
-        public static List<Log> SearchResults = new List<Log>();
+        public static SmartCollection<Log> Logs = new();
+        public static List<Log> SearchResults = new();
         private static int SearchMatchesIndicesPos = -1;
-        public static BackgroundQueue WorkerQueue = new BackgroundQueue();
-        public static ControlStyleSchema ControlStyleSchema = new ControlStyleSchema(ColorTheme.LightTheme);
+        public static BackgroundQueue WorkerQueue = new();
+        public static ControlStyleSchema ControlStyleSchema = new(ColorTheme.LightTheme);
         public static Log LogInTextSelectionState;
         public static LogSearchMode SearchMode = LogSearchMode.None;
 
@@ -398,18 +328,26 @@ namespace LogViewer {
             }
         }
 
-        public static void SearchInLogs(String Text) {
-            for (int i = 0; i < Logs.Count; ++i) {
-                if (Logs[i].Text.Length > 0 && SearchInLogText(Logs[i].Text, Text)) {
-                    SearchResults.Add(Logs[i]);
-                    Logs[i].highlightState |= HighlightState.SearchResultHighlight;
-                    Logs[i].TryHighlight();
-                }
-            }
+        public static async void SearchInLogs(String Text, Action<Log> action) {
+            await WorkerQueue.QueueTask(() => {
+                Log.ClearSearchResults();
 
-            if (SearchResults.Count > 0) {
-                SearchMatchesIndicesPos = 0;
-            }
+                if (Text.Length > 0) {
+                    for (int i = 0; i < Logs.Count; ++i) {
+                        if (Logs[i].Text.Length > 0 && SearchInLogText(Logs[i].Text, Text)) {
+                            SearchResults.Add(Logs[i]);
+                            Logs[i].highlightState |= HighlightState.SearchResultHighlight;
+                            Logs[i].TryHighlight();
+                        }
+                    }
+                }
+
+                if (SearchResults.Count > 0) {
+                    SearchMatchesIndicesPos = 0;
+                }
+
+                action(Log.GetCurrentSearchResult());
+            });
         }
 
         private static void ResetLogs() {
@@ -430,15 +368,7 @@ namespace LogViewer {
                 tempLogs.Add(new Log(Line, i++));
             }
             Logs.AddRange(tempLogs);
-            GenerateLineNoText();
-        }
-
-        public static void GenerateLineNoText() {
-            if (Logs.Count == 0) {
-                return;
-            }
-
-            for (int i = 0; i < Logs.Count; ++i) {
+            for (i = 0; i < Logs.Count; ++i) {
                 Logs[i].LineNoWidth = Logs.Last().LineNoText.Length * 8;
             }
         }
