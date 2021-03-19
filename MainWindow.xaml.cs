@@ -1,17 +1,13 @@
 ﻿using LogViewer.Helpers;
 using Microsoft.Win32;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -21,47 +17,40 @@ namespace LogViewer {
     public partial class MainWindow : Window {
         public MainWindow() {
             InitializeComponent();
-            Loaded += MainWindowLoaded;
             LogListView.ItemsSource = Log.Logs;
-        }
-
-        private void MainWindowLoaded(object sender, RoutedEventArgs e) {
             var window = Window.GetWindow(this);
-            window.KeyDown += Window_KeyDown;
-            window.MouseDown += Window_MouseDown;
+            window.KeyDown += (sender, e) => {
+                if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control) {
+                    var sb = new StringBuilder();
+                    var selectedItems = LogListView.SelectedItems;
+
+                    foreach (var item in selectedItems) {
+                        sb.Append($"{((Log)item).Text}\n");
+                    }
+
+                    Clipboard.SetDataObject(sb.ToString());
+                } else if (e.Key == Key.G && Keyboard.Modifiers == ModifierKeys.Control) {
+                    GoToLineBox.Focus();
+                } else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control) {
+                    SearchBox.Focus();
+                }
+            };
+            window.MouseDown += (sender, e) => {
+                var log = ((sender as FrameworkElement).DataContext) as Log;
+                if (Log.LogInTextSelectionState != null) {
+                    if (log == null || Log.LogInTextSelectionState != log) {
+                        Log.LogInTextSelectionState.TextBlockVisibility = Visibility.Visible;
+                        Log.LogInTextSelectionState.TextSelectableBoxVisibility = Visibility.Hidden;
+                    }
+                }
+            };
         }
 
-        private void Window_MouseDown(object sender, MouseButtonEventArgs e) {
-            var log = ((sender as FrameworkElement).DataContext) as Log;
-            if (Log.LogInTextSelectionState != null) {
-                if (log == null || Log.LogInTextSelectionState != log) {
-                    Log.LogInTextSelectionState.TextBlockVisibility = Visibility.Visible;
-                    Log.LogInTextSelectionState.TextSelectableBoxVisibility = Visibility.Hidden;
-                }
-            }
-        }
 
         private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e) {
             var openFileDialog = new OpenFileDialog();
             if (openFileDialog.ShowDialog() == true) {
                 Log.LoadLogFile(openFileDialog.FileName);
-            }
-        }
-
-        private void Window_KeyDown(object sender, KeyEventArgs e) {
-            if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control) {
-                var sb = new StringBuilder();
-                var selectedItems = LogListView.SelectedItems;
-
-                foreach (var item in selectedItems) {
-                    sb.Append($"{((Log)item).Text}\n");
-                }
-
-                Clipboard.SetDataObject(sb.ToString());
-            } else if (e.Key == Key.G && Keyboard.Modifiers == ModifierKeys.Control) {
-                GoToLineBox.Focus();
-            } else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control) {
-                SearchBox.Focus();
             }
         }
 
@@ -164,8 +153,7 @@ namespace LogViewer {
                 Log.ClearSearchResults();
                 if (SearchTextBoxContent.Length > 0) {
                     Log.SearchInLogs(SearchTextBoxContent);
-                    if (Log.GetCurrentSearchResult() != null)
-                    {
+                    if (Log.GetCurrentSearchResult() != null) {
                         Dispatcher.Invoke(() => {
                             SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
                             LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
@@ -176,9 +164,7 @@ namespace LogViewer {
                             SearchResultTextBox.Text = "No results";
                         });
                     }
-                }
-                else
-                {
+                } else {
                     Dispatcher.Invoke(() => {
                         SearchResultTextBox.Text = "No results";
                     });
@@ -282,8 +268,7 @@ namespace LogViewer {
             SelectedHighlight = 2,
         };
         [Flags]
-        public enum LogSearchMode
-        {
+        public enum LogSearchMode {
             None = 0,
             CaseSensitive = 1,
             Regex = 2,

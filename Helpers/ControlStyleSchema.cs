@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LogViewer.Helpers {
+﻿namespace LogViewer.Helpers {
     public enum ColorTheme {
         LightTheme,
         DarkTheme,
