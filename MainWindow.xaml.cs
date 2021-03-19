@@ -324,7 +324,7 @@ namespace LogViewer {
         }
         private HighlightState highlightState = HighlightState.NoHighlight;
         public int LineNo;
-        public static ObservableCollection<Log> Logs = new ObservableCollection<Log>();
+        public static SmartCollection<Log> Logs = new SmartCollection<Log>();
         public static List<Log> SearchResults = new List<Log>();
         private static int SearchMatchesIndicesPos = -1;
         public static BackgroundQueue WorkerQueue = new BackgroundQueue();
@@ -334,9 +334,9 @@ namespace LogViewer {
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public Log(string Text) {
+        public Log(string Text, int LineNo) {
             this.Text = Text;
-            this.LineNo = Logs.Count + 1;
+            this.LineNo = LineNo;
             this.LineNoText = this.LineNo.ToString();
             this.highlightState = HighlightState.NoHighlight;
             this.TextBlockVisibility = Visibility.Visible;
@@ -434,13 +434,17 @@ namespace LogViewer {
         }
 
         public static void LoadLogFile(string Path) {
+            int i = 0;
             string Line;
             var LogFileStream = new StreamReader(Path);
-            Debug.WriteLine("Load log file...");
+            var tempLogs = new List<Log>();
+
             ResetLogs();
+
             while ((Line = LogFileStream.ReadLine()) != null) {
-                Logs.Add(new Log(Line));
+                tempLogs.Add(new Log(Line, i++));
             }
+            Logs.AddRange(tempLogs);
             GenerateLineNoText();
         }
 
