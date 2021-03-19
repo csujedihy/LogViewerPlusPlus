@@ -365,7 +365,7 @@ namespace LogViewer {
             ResetLogs();
 
             while ((Line = LogFileStream.ReadLine()) != null) {
-                tempLogs.Add(new Log(Line, i++));
+                tempLogs.Add(new Log(Line, ++i));
             }
             Logs.AddRange(tempLogs);
             for (i = 0; i < Logs.Count; ++i) {
