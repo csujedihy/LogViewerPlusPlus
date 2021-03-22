@@ -262,12 +262,12 @@ namespace LogViewer {
         }
         public HighlightState highlightState = HighlightState.NoHighlight;
         public int LineNo;
-        public static SmartCollection<Log> Logs = new();
-        public static List<Log> SearchResults = new();
+        public static SmartCollection<Log> Logs = new SmartCollection<Log>();
+        public static List<Log> SearchResults = new List<Log>();
         private volatile static bool StopSearch = false;
         private static int SearchMatchesIndicesPos = -1;
-        public static BackgroundQueue WorkerQueue = new();
-        public static ControlStyleSchema ControlStyleSchema = new(ColorTheme.LightTheme);
+        public static BackgroundQueue WorkerQueue = new BackgroundQueue();
+        public static ControlStyleSchema ControlStyleSchema = new ControlStyleSchema(ColorTheme.LightTheme);
         public static Log LogInTextSelectionState;
         public static LogSearchMode SearchMode = LogSearchMode.None;
         private static volatile ManualResetEvent SignalEvent = new ManualResetEvent(true);
@@ -339,16 +339,14 @@ namespace LogViewer {
                 // The simple algorithm here is use \b<regex>\b to find the whole word match.
                 // If the first character or the last character is a separator, then remove the corresponding \b.
                 var leftPattern = char.IsPunctuation(Text[0]) ? @"" : @"\b";
-                var rightPattern = char.IsPunctuation(Text[^1]) ? @"" : @"\b";
+                var rightPattern = char.IsPunctuation(Text[Text.Length - 1]) ? @"" : @"\b";
                 var FinalPattern = string.Format(@"{0}{1}{2}", leftPattern, Regex.Escape(Pattern), rightPattern);
                 return Regex.IsMatch(
                     Text, FinalPattern,
                     RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
             } else {
                 return
-                    Text.Contains(
-                        Pattern,
-                        IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+                    Text.IndexOf(Pattern, IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) != -1;
             }
         }
 
