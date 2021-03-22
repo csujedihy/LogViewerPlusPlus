@@ -1,21 +1,15 @@
-﻿using System;
+﻿using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace LogViewer.Helpers {
     public class BackgroundQueue {
-        private Task previousTask = Task.FromResult(true);
-        private object key = new object();
+        public Thread runningThread;
+        public volatile ManualResetEvent SignalEvent = new ManualResetEvent(true);
+        public object key = new object();
 
-        public Task QueueTask(Action action) {
-            lock (key) {
-                previousTask = previousTask.ContinueWith(
-                  t => action(),
-                  CancellationToken.None,
-                  TaskContinuationOptions.None,
-                  TaskScheduler.Default);
-                return previousTask;
-            }
+        public void QueueTask(ThreadStart action) {
+            SignalEvent.Reset();
+            new Thread(() => { action(); SignalEvent.Set(); }).Start();
         }
     }
 }

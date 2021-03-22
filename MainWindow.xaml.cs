@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -71,8 +72,8 @@ namespace LogViewer {
             }
         }
 
-        private async void PrevButton_Click(object sender, RoutedEventArgs e) {
-            await Log.WorkerQueue.QueueTask(() => {
+        private void PrevButton_Click(object sender, RoutedEventArgs e) {
+            Log.WorkerQueue.QueueTask(() => {
                 var log = Log.GetPrevSearchResult();
                 if (log != null) {
                     Dispatcher.Invoke(() => {
@@ -84,8 +85,8 @@ namespace LogViewer {
             });
         }
 
-        private async void NextButton_Click(object sender, RoutedEventArgs e) {
-            await Log.WorkerQueue.QueueTask(() => {
+        private void NextButton_Click(object sender, RoutedEventArgs e) {
+            Log.WorkerQueue.QueueTask(() => {
                 var log = Log.GetNextSearchResult();
                 if (log != null) {
                     Dispatcher.Invoke(() => {
@@ -188,6 +189,10 @@ namespace LogViewer {
                 }).Start();
             }
         }
+
+        private void FilterToggle_Click(object sender, RoutedEventArgs e) {
+
+        }
     }
 
     public class Log : INotifyPropertyChanged {
@@ -203,6 +208,7 @@ namespace LogViewer {
             CaseSensitive = 1,
             Regex = 2,
             WholeWordMatch = 4,
+            Filter = 8,
         };
         public string Text { get; set; }
         public string LineNoText { get; set; }
@@ -216,6 +222,11 @@ namespace LogViewer {
         public Visibility TextBlockVisibility {
             get { return _TextBlockVisibility; }
             set { _TextBlockVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextBlockVisibility))); }
+        }
+        private Visibility _LogVisibility = Visibility.Visible;
+        public Visibility LogVisibility {
+            get { return _LogVisibility; }
+            set { _LogVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LogVisibility))); }
         }
         private string _LogRowBgColor;
         public string LogRowBgColor {
@@ -241,11 +252,13 @@ namespace LogViewer {
         public int LineNo;
         public static SmartCollection<Log> Logs = new();
         public static List<Log> SearchResults = new();
+        private volatile static bool StopSearch = false;
         private static int SearchMatchesIndicesPos = -1;
         public static BackgroundQueue WorkerQueue = new();
         public static ControlStyleSchema ControlStyleSchema = new(ColorTheme.LightTheme);
         public static Log LogInTextSelectionState;
         public static LogSearchMode SearchMode = LogSearchMode.None;
+        private static volatile ManualResetEvent SignalEvent = new ManualResetEvent(true);
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -309,8 +322,7 @@ namespace LogViewer {
             bool IgnoreCase = ((SearchMode & LogSearchMode.CaseSensitive) == 0);
             if ((SearchMode & LogSearchMode.Regex) != 0) {
                 return Regex.IsMatch(
-                    Text, Pattern,
-                    RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
+                    Text, Pattern, RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
             } else if ((SearchMode & LogSearchMode.WholeWordMatch) != 0) {
                 // The simple algorithm here is use \b<regex>\b to find the whole word match.
                 // If the first character or the last character is a separator, then remove the corresponding \b.
@@ -328,12 +340,19 @@ namespace LogViewer {
             }
         }
 
-        public static async void SearchInLogs(String Text, Action<Log> action) {
-            await WorkerQueue.QueueTask(() => {
+        public static void SearchInLogs(String Text, Action<Log> action) {
+            StopSearch = true;
+            SignalEvent.WaitOne();
+            StopSearch = false;
+            SignalEvent.Reset();
+            new Thread(() => {
                 ClearSearchResults();
 
                 if (Text.Length > 0) {
                     for (int i = 0; i < Logs.Count; ++i) {
+                        if (StopSearch) {
+                            break;
+                        }
                         if (Logs[i].Text.Length > 0 && SearchInLogText(Logs[i].Text, Text)) {
                             SearchResults.Add(Logs[i]);
                             Logs[i].highlightState |= HighlightState.SearchResultHighlight;
@@ -346,8 +365,9 @@ namespace LogViewer {
                     SearchMatchesIndicesPos = 0;
                 }
 
-                action(GetCurrentSearchResult());
-            });
+                SignalEvent.Set();
+                new Thread(() => { action(GetCurrentSearchResult()); }).Start();
+            }).Start();
         }
 
         private static void ResetLogs() {

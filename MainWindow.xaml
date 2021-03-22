@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:helpers="clr-namespace:LogViewer.Helpers"
         mc:Ignorable="d"
         Title="LogViewer++" Height="450" Width="800" >
     <Window.CommandBindings>
@@ -149,6 +148,7 @@
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick"/>
+                    <Setter Property="Visibility" Value="{Binding IsVisible}" />
                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                     <Setter Property="Padding" Value="0"/>
                     <Setter Property="Margin" Value="0"/>
@@ -161,6 +161,12 @@
             <Border Style="{StaticResource TextboxContainerStyle}">
                 <StackPanel Orientation = "Horizontal">
                     <TextBox x:Name="SearchBox" Style="{StaticResource SearchBoxStyle}" TextChanged="SearchBoxTextChanged"/>
+                    <ToggleButton
+                        x:Name="FilterToggle"
+                        Content="Fl"
+                        Click="FilterToggle_Click"
+                        Style="{StaticResource SearchModeToggleStyle}"
+                        ToolTip="Filter to results"/>
                     <ToggleButton
                         x:Name="CaseSensitiveToggle"
                         Content="Aa"

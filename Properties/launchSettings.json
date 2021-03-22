@@ -1,7 +1,8 @@
 {
   "profiles": {
     "LogViewer": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "nativeDebugging": true
     }
   }
 }
