@@ -30,6 +30,13 @@
             <Setter Property="BorderThickness" Value="0"></Setter>
             <Setter Property="Width" Value="Auto"></Setter>
         </Style>
+        <Style x:Key="FilterToggleStyle" TargetType="{x:Type ToggleButton}">
+            <Setter Property="Padding" Value="5,0,5,0"></Setter>
+            <Setter Property="Margin" Value="3,3,0,3"></Setter>
+            <Setter Property="BorderThickness" Value="0"></Setter>
+            <Setter Property="IsChecked" Value="False"></Setter>
+            <Setter Property="IsThreeState" Value="False"></Setter>
+        </Style>
         <Style x:Key="SearchModeToggleStyle" TargetType="{x:Type ToggleButton}">
             <Setter Property="Background" Value="Transparent"></Setter>
             <Setter Property="FontWeight" Value="Normal"></Setter>
@@ -148,7 +155,6 @@
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick"/>
-                    <Setter Property="Visibility" Value="{Binding IsVisible}" />
                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                     <Setter Property="Padding" Value="0"/>
                     <Setter Property="Margin" Value="0"/>
@@ -161,12 +167,6 @@
             <Border Style="{StaticResource TextboxContainerStyle}">
                 <StackPanel Orientation = "Horizontal">
                     <TextBox x:Name="SearchBox" Style="{StaticResource SearchBoxStyle}" TextChanged="SearchBoxTextChanged"/>
-                    <ToggleButton
-                        x:Name="FilterToggle"
-                        Content="Fl"
-                        Click="FilterToggle_Click"
-                        Style="{StaticResource SearchModeToggleStyle}"
-                        ToolTip="Filter to results"/>
                     <ToggleButton
                         x:Name="CaseSensitiveToggle"
                         Content="Aa"
@@ -190,6 +190,12 @@
             <TextBlock x:Name="SearchResultTextBox" Text="No results" Style="{StaticResource ToolLabelStyle}" />
             <Button x:Name="PrevButton" Content="&#x1f844;" Click="PrevButton_Click" Style="{StaticResource SearchNavButtonStyle}" ToolTip="Next result"/>
             <Button x:Name="NextButton" Content="&#x1f846;" Click="NextButton_Click" Style="{StaticResource SearchNavButtonStyle}" ToolTip="Previous result"/>
+            <ToggleButton
+                        x:Name="FilterToggle"
+                        Content="Filter"
+                        Click="FilterToggle_Click"
+                        Style="{StaticResource FilterToggleStyle}"
+                        ToolTip="Filter to results"/>
             <Border Style="{StaticResource ToolsSeparatorStyle}"/>
             <TextBlock Text="Go to Line" Style="{StaticResource ToolLabelStyle}"/>
             <Border Style="{StaticResource TextboxContainerStyle}">

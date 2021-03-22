@@ -12,6 +12,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace LogViewer {
@@ -19,6 +20,8 @@ namespace LogViewer {
         public MainWindow() {
             InitializeComponent();
             LogListView.ItemsSource = Log.Logs;
+            var view = (CollectionView)CollectionViewSource.GetDefaultView(LogListView.ItemsSource);
+            view.Filter = UserFilter;
             var window = Window.GetWindow(this);
             window.KeyDown += (sender, e) => {
                 if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control) {
@@ -47,6 +50,18 @@ namespace LogViewer {
             };
         }
 
+        private bool UserFilter(object item) {
+            if (Log.FilterToSearchResults) {
+                var log = item as Log;
+                if ((log.highlightState & Log.HighlightState.SearchResultHighlight) != 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
 
         private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e) {
             var openFileDialog = new OpenFileDialog();
@@ -63,8 +78,8 @@ namespace LogViewer {
             var SearchTextBox = (TextBox)sender;
             try {
                 int Index = Int32.Parse(SearchTextBox.Text) - 1;
-                if (Index >= 0 && Index < LogListView.Items.Count) {
-                    LogListView.SelectedItem = LogListView.Items[Index];
+                if (Index >= 0 && Index < Log.Logs.Count) {
+                    LogListView.SelectedItem = Log.Logs[Index];
                     LogListView.ScrollIntoView(LogListView.SelectedItem);
                 }
             } catch (FormatException) {
@@ -191,13 +206,15 @@ namespace LogViewer {
         }
 
         private void FilterToggle_Click(object sender, RoutedEventArgs e) {
-
+            var toggleButton = sender as ToggleButton;
+            Log.FilterToSearchResults = (bool)toggleButton.IsChecked;
+            CollectionViewSource.GetDefaultView(LogListView.ItemsSource).Refresh();
         }
     }
 
     public class Log : INotifyPropertyChanged {
         [Flags]
-        enum HighlightState {
+        public enum HighlightState {
             NoHighlight = 0,
             SearchResultHighlight = 1,
             SelectedHighlight = 2,
@@ -223,11 +240,6 @@ namespace LogViewer {
             get { return _TextBlockVisibility; }
             set { _TextBlockVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextBlockVisibility))); }
         }
-        private Visibility _LogVisibility = Visibility.Visible;
-        public Visibility LogVisibility {
-            get { return _LogVisibility; }
-            set { _LogVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LogVisibility))); }
-        }
         private string _LogRowBgColor;
         public string LogRowBgColor {
             get { return _LogRowBgColor; }
@@ -248,7 +260,7 @@ namespace LogViewer {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
             }
         }
-        private HighlightState highlightState = HighlightState.NoHighlight;
+        public HighlightState highlightState = HighlightState.NoHighlight;
         public int LineNo;
         public static SmartCollection<Log> Logs = new();
         public static List<Log> SearchResults = new();
@@ -259,7 +271,7 @@ namespace LogViewer {
         public static Log LogInTextSelectionState;
         public static LogSearchMode SearchMode = LogSearchMode.None;
         private static volatile ManualResetEvent SignalEvent = new ManualResetEvent(true);
-
+        public static bool FilterToSearchResults = false;
         public event PropertyChangedEventHandler PropertyChanged;
 
         public Log(string Text, int LineNo) {
