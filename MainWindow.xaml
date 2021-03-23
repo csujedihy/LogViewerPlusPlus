@@ -120,13 +120,12 @@
                     <Border Padding="2" Width="Auto" Background="{Binding LogRowBgColor}">
                         <Grid Height="25">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="{Binding LineNoWidth}" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <TextBlock
                                 Grid.Column="0"
                                 Text="{Binding LineNoText}"
-                                Width="{Binding LineNoWidth}"
                                 TextAlignment="Right"
                                 VerticalAlignment="Center"
                                 Margin="0,0,5,0"
