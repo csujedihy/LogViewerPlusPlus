@@ -110,7 +110,6 @@
                 x:Name="LogListView"
                 Height="Auto"
                 MaxHeight="1000"
-                VirtualizingStackPanel.VirtualizationMode="Recycling"
                 Width="Auto"
                 ScrollViewer.HorizontalScrollBarVisibility="Visible"
                 SelectionChanged="LogListView_SelectionChanged"
@@ -137,16 +136,6 @@
                             <helpers:LwTextBlock
                                 Grid.Column="1"
                                 Visibility="{Binding TextBlockVisibility}"
-                                Foreground="{Binding LogTextColor, Source={x:Static local:MainWindow.colorThemeViewModel}}"
-                                Text="{Binding Text}"
-                                Width="Auto" />
-                            <TextBox
-                                x:Name="LogTextBox"
-                                Grid.Column="1"
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Center"
-                                IsReadOnly="True"
-                                Visibility="{Binding TextSelectableBoxVisibility, Mode=OneWay}"
                                 Text="{Binding Text}"
                                 Width="Auto" />
                         </Grid>
