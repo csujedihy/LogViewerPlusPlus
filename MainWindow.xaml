@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:LogViewer.Helpers"
+        xmlns:helpers="clr-namespace:LogViewer.Helpers"
+        xmlns:local="clr-namespace:LogViewer"
         mc:Ignorable="d"
         Title="LogViewer++" Height="450" Width="800" >
     <Window.CommandBindings>
@@ -109,16 +110,19 @@
                 x:Name="LogListView"
                 Height="Auto"
                 MaxHeight="1000"
+                VirtualizingStackPanel.VirtualizationMode="Recycling"
                 Width="Auto"
                 ScrollViewer.HorizontalScrollBarVisibility="Visible"
                 SelectionChanged="LogListView_SelectionChanged"
                 HorizontalAlignment="Stretch"
                 Drop="LogListView_Drop"
-                AllowDrop="true">
+                AllowDrop="true"
+                DataContext="{x:Static local:MainWindow.colorThemeViewModel}"
+                Background="{Binding ListViewBgColor}" >
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <Border Padding="2" Width="Auto" Background="{Binding LogRowBgColor}">
-                        <Grid Height="25">
+                    <Border Padding="8" Width="Auto" Background="{Binding LogRowBgColor}">
+                        <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="{Binding LineNoWidth}" />
                                 <ColumnDefinition Width="Auto" />
@@ -129,10 +133,11 @@
                                 TextAlignment="Right"
                                 VerticalAlignment="Center"
                                 Margin="0,0,5,0"
-                                Foreground="Crimson" />
-                            <local:LwTextBlock
+                                Foreground="{Binding LineNoBgColor, Source={x:Static local:MainWindow.colorThemeViewModel}}" />
+                            <helpers:LwTextBlock
                                 Grid.Column="1"
                                 Visibility="{Binding TextBlockVisibility}"
+                                Foreground="{Binding LogTextColor, Source={x:Static local:MainWindow.colorThemeViewModel}}"
                                 Text="{Binding Text}"
                                 Width="Auto" />
                             <TextBox
@@ -197,6 +202,13 @@
             <Border Style="{StaticResource TextboxContainerStyle}">
                 <TextBox x:Name="GoToLineBox" TextChanged="GoToLineBoxTextChanged" Style="{StaticResource GoToLineBoxStyle}"/>
             </Border>
+            <Border Style="{StaticResource ToolsSeparatorStyle}"/>
+            <ToggleButton
+                        x:Name="DarkModeToggle"
+                        Content="Dark Mode"
+                        Click="DarkModeToggle_Click"
+                        Style="{StaticResource FilterToggleStyle}"
+                        ToolTip="Toggle dark mode"/>
         </StackPanel>
     </Grid>
 </Window>

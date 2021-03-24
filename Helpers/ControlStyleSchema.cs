@@ -1,28 +1,14 @@
 ﻿namespace LogViewer.Helpers {
-    public enum ColorTheme {
-        LightTheme,
-        DarkTheme,
-    };
-
     public class ControlStyleSchema {
-        public string LineNoColor { get; set; }
-        public string LogTextFgColor { get; set; }
-        public string LogTextBgSelectedColor { get; set; }
-        public string LogTextBgNormalColor { get; set; }
-        public string LogTextBgColor { get; set; }
-        public string LogTextBgSearchResultColor { get; set; }
-        public string LogTextNormalWeight { get; set; }
-        public string LogTextSearchResultWeight { get; set; }
-        public string LogTextWeight { get; set; }
-
-        public ControlStyleSchema(ColorTheme Theme) {
-            LineNoColor = "Red";
-            LogTextFgColor = "Black";
-            LogTextBgSelectedColor = "Silver";
-            LogTextBgNormalColor = "White";
-            LogTextBgSearchResultColor = "LightSkyBlue";
-            LogTextNormalWeight = "Normal";
-            LogTextSearchResultWeight = "DemiBold";
-        }
+        public static string LineNoColor = "Crimson";
+        public static string LineNoColorDarkMode = "#606D83";
+        public static string LogTextFgColor = "Black";
+        public static string LogTextFgColorDarkMode = "#ABB2BF";
+        public static string LogTextBgSelectedColor = "Silver";
+        public static string LogListViewBgNormalColor = "Transparent";
+        public static string LogTextBgSearchResultColor = "LightSkyBlue";
+        public static string LogTextNormalWeight = "Normal";
+        public static string LogTextSearchResultWeight = "DemiBold";
+        public static string LogListViewBgColorDarkMode = "#282C34";
     }
 }

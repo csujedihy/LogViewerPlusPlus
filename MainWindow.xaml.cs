@@ -4,8 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -14,9 +16,11 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace LogViewer {
     public partial class MainWindow : Window {
+        public static ColorThemeViewModel colorThemeViewModel = new ColorThemeViewModel();
         public MainWindow() {
             InitializeComponent();
             LogListView.ItemsSource = Log.Logs;
@@ -46,6 +50,12 @@ namespace LogViewer {
                         Log.LogInTextSelectionState.TextBlockVisibility = Visibility.Visible;
                         Log.LogInTextSelectionState.TextSelectableBoxVisibility = Visibility.Hidden;
                     }
+                }
+            };
+            Loaded += (sender, _) => {
+                var border = (Border)LogListView.Template.FindName("Bd", LogListView);
+                if (border != null) {
+                    border.Padding = new Thickness(0);
                 }
             };
         }
@@ -210,6 +220,53 @@ namespace LogViewer {
             Log.FilterToSearchResults = (bool)toggleButton.IsChecked;
             CollectionViewSource.GetDefaultView(LogListView.ItemsSource).Refresh();
         }
+
+        private void DarkModeToggle_Click(object sender, RoutedEventArgs e) {
+            var toggleButton = sender as ToggleButton;
+            colorThemeViewModel.ToggleDarkMode((bool)toggleButton.IsChecked);
+        }
+    }
+
+    public class ColorThemeViewModel : INotifyPropertyChanged {
+        public event PropertyChangedEventHandler PropertyChanged;
+        public SolidColorBrush _ListViewBgColor;
+        public SolidColorBrush ListViewBgColor {
+            get => _ListViewBgColor;
+            set {
+                _ListViewBgColor = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ListViewBgColor)));
+            }
+        }
+        public SolidColorBrush _LineNoBgColor;
+        public SolidColorBrush LineNoBgColor {
+            get => _LineNoBgColor;
+            set {
+                _LineNoBgColor = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LineNoBgColor)));
+            }
+        }
+
+        public SolidColorBrush _LogTextColor;
+        public SolidColorBrush LogTextColor {
+            get => _LogTextColor;
+            set {
+                _LogTextColor = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LogTextColor)));
+            }
+        }
+
+        public ColorThemeViewModel() {
+            ToggleDarkMode(false);
+        }
+
+        public void ToggleDarkMode(bool Enabled) {
+            if (Enabled) {
+                ListViewBgColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LogListViewBgColorDarkMode));
+                LineNoBgColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LineNoColorDarkMode));
+                LogTextColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LogTextFgColorDarkMode));
+            } else {
+                LogTextColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LogTextFgColor));
+                LineNoBgColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LineNoColor));
+                ListViewBgColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LogListViewBgNormalColor));
+            }
+        }
     }
 
     public class Log : INotifyPropertyChanged {
@@ -267,7 +324,7 @@ namespace LogViewer {
         private volatile static bool StopSearch = false;
         private static int SearchMatchesIndicesPos = -1;
         public static BackgroundQueue WorkerQueue = new BackgroundQueue();
-        public static ControlStyleSchema ControlStyleSchema = new ControlStyleSchema(ColorTheme.LightTheme);
+        
         public static Log LogInTextSelectionState;
         public static LogSearchMode SearchMode = LogSearchMode.None;
         private static volatile ManualResetEvent SignalEvent = new ManualResetEvent(true);
@@ -290,7 +347,7 @@ namespace LogViewer {
             } else if ((highlightState & HighlightState.SearchResultHighlight) != 0) {
                 LogRowBgColor = ControlStyleSchema.LogTextBgSearchResultColor;
             } else {
-                LogRowBgColor = ControlStyleSchema.LogTextBgNormalColor;
+                LogRowBgColor = ControlStyleSchema.LogListViewBgNormalColor;
             }
         }
 
