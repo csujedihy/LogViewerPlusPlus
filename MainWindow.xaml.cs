@@ -222,7 +222,6 @@ namespace LogViewer {
 
         private void DarkModeToggle_Click(object sender, RoutedEventArgs e) {
             var toggleButton = sender as ToggleButton;
-            colorThemeViewModel.ToggleDarkMode((bool)toggleButton.IsChecked);
             LogListView.Items.Refresh();
         }
     }
@@ -244,8 +243,18 @@ namespace LogViewer {
             }
         }
 
+        public bool _DarkModeEnabled;
+        public bool DarkModeEnabled {
+            get => _DarkModeEnabled;
+            set {
+                _DarkModeEnabled = value;
+                ToggleDarkMode(_DarkModeEnabled);
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DarkModeEnabled)));
+            }
+        }
+
         public ColorThemeViewModel() {
-            ToggleDarkMode(true);
+            DarkModeEnabled = true;
         }
 
         public void ToggleDarkMode(bool Enabled) {

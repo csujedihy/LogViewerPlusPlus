@@ -208,7 +208,9 @@
                         Content="Dark Mode"
                         Click="DarkModeToggle_Click"
                         Style="{StaticResource FilterToggleStyle}"
-                        ToolTip="Toggle dark mode"/>
+                        ToolTip="Toggle dark mode"
+                        IsThreeState="False"
+                        IsChecked="{Binding DarkModeEnabled, Source={x:Static local:MainWindow.colorThemeViewModel}}"/>
         </StackPanel>
     </Grid>
 </Window>
