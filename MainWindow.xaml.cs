@@ -3,10 +3,8 @@ using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -221,7 +219,9 @@ namespace LogViewer {
         }
 
         private void DarkModeToggle_Click(object sender, RoutedEventArgs e) {
-            var toggleButton = sender as ToggleButton;
+            foreach (var log in Log.Logs) {
+                log.TryHighlight();
+            }
             LogListView.Items.Refresh();
         }
     }
@@ -293,22 +293,22 @@ namespace LogViewer {
         public int LineNoWidth { get; set; }
         private Visibility _TextSelectableBoxVisibility;
         public Visibility TextSelectableBoxVisibility {
-            get { return _TextSelectableBoxVisibility; }
+            get => _TextSelectableBoxVisibility;
             set { _TextSelectableBoxVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextSelectableBoxVisibility))); }
         }
         private Visibility _TextBlockVisibility;
         public Visibility TextBlockVisibility {
-            get { return _TextBlockVisibility; }
+            get => _TextBlockVisibility;
             set { _TextBlockVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextBlockVisibility))); }
         }
         private string _LogRowBgColor;
         public string LogRowBgColor {
-            get { return _LogRowBgColor; }
+            get => _LogRowBgColor;
             set { _LogRowBgColor = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LogRowBgColor))); }
         }
         private bool _IsSelected;
         public bool IsSelected {
-            get { return _IsSelected; }
+            get => _IsSelected;
             set {
                 if (value) {
                     _IsSelected = true;
@@ -328,7 +328,6 @@ namespace LogViewer {
         private volatile static bool StopSearch = false;
         private static int SearchMatchesIndicesPos = -1;
         public static BackgroundQueue WorkerQueue = new BackgroundQueue();
-        
         public static Log LogInTextSelectionState;
         public static LogSearchMode SearchMode = LogSearchMode.None;
         private static volatile ManualResetEvent SignalEvent = new ManualResetEvent(true);
@@ -345,13 +344,23 @@ namespace LogViewer {
             this.TryHighlight();
         }
 
-        private void TryHighlight() {
-            if ((highlightState & HighlightState.SelectedHighlight) != 0) {
-                LogRowBgColor = ControlStyleSchema.LogTextBgSelectedColor;
-            } else if ((highlightState & HighlightState.SearchResultHighlight) != 0) {
-                LogRowBgColor = ControlStyleSchema.LogTextBgSearchResultColor;
+        public void TryHighlight() {
+            if (MainWindow.colorThemeViewModel.DarkModeEnabled) {
+                if ((highlightState & HighlightState.SelectedHighlight) != 0) {
+                    LogRowBgColor = ControlStyleSchema.LogTextBgSelectedColorDarkMode;
+                } else if ((highlightState & HighlightState.SearchResultHighlight) != 0) {
+                    LogRowBgColor = ControlStyleSchema.LogTextBgSearchResultColorDarkMode;
+                } else {
+                    LogRowBgColor = ControlStyleSchema.LogListViewBgNormalColor;
+                }
             } else {
-                LogRowBgColor = ControlStyleSchema.LogListViewBgNormalColor;
+                if ((highlightState & HighlightState.SelectedHighlight) != 0) {
+                    LogRowBgColor = ControlStyleSchema.LogTextBgSelectedColor;
+                } else if ((highlightState & HighlightState.SearchResultHighlight) != 0) {
+                    LogRowBgColor = ControlStyleSchema.LogTextBgSearchResultColor;
+                } else {
+                    LogRowBgColor = ControlStyleSchema.LogListViewBgNormalColor;
+                }
             }
         }
 

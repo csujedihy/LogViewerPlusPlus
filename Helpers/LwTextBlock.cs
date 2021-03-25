@@ -6,7 +6,7 @@ using System.Windows.Media;
 
 namespace LogViewer.Helpers {
     public class LwTextBlock : FrameworkElement {
-        private Typeface _typeface = new Typeface(new FontFamily(), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+        private Typeface _typeface = new Typeface(new FontFamily(), FontStyles.Normal, FontWeights.Medium, FontStretches.Normal);
         protected FormattedText _formattedText;
         private Point _textPosition = new Point(0, 0);
         public static SolidColorBrush TextColor;
