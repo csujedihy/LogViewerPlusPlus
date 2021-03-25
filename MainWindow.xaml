@@ -117,10 +117,10 @@
                 Drop="LogListView_Drop"
                 AllowDrop="true"
                 DataContext="{x:Static local:MainWindow.colorThemeViewModel}"
-                Background="{Binding ListViewBgColor}" >
+                Background="{Binding ListViewBgBrush}" >
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <Border Padding="8" Width="Auto" Background="{Binding LogRowBgColor}">
+                    <Border Padding="8" Width="Auto" Background="{Binding LogRowBgBrush}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="{Binding LineNoWidth}" />
@@ -132,7 +132,7 @@
                                 FontWeight="Medium"
                                 TextAlignment="Right"
                                 VerticalAlignment="Center"
-                                Foreground="{Binding LineNoBgColor, Source={x:Static local:MainWindow.colorThemeViewModel}}"
+                                Foreground="{Binding LineNoFgBrush, Source={x:Static local:MainWindow.colorThemeViewModel}}"
                                  />
                             <helpers:LwTextBlock
                                 x:Name="LogTextBlock"
