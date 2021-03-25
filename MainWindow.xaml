@@ -132,10 +132,21 @@
                                 TextAlignment="Right"
                                 VerticalAlignment="Center"
                                 Margin="0,0,5,0"
-                                Foreground="{Binding LineNoBgColor, Source={x:Static local:MainWindow.colorThemeViewModel}}" />
+                                Foreground="{Binding LineNoBgColor, Source={x:Static local:MainWindow.colorThemeViewModel}}"
+                                 />
                             <helpers:LwTextBlock
+                                x:Name="LogTextBlock"
                                 Grid.Column="1"
                                 Visibility="{Binding TextBlockVisibility}"
+                                Text="{Binding Text}"
+                                Width="Auto" />
+                            <TextBox
+                                x:Name="LogTextBox"
+                                Grid.Column="1"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Center"
+                                IsReadOnly="True"
+                                Visibility="{Binding TextSelectableBoxVisibility, Mode=OneWay}"
                                 Text="{Binding Text}"
                                 Width="Auto" />
                         </Grid>

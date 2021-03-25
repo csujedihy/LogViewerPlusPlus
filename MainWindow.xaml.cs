@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -224,6 +223,7 @@ namespace LogViewer {
         private void DarkModeToggle_Click(object sender, RoutedEventArgs e) {
             var toggleButton = sender as ToggleButton;
             colorThemeViewModel.ToggleDarkMode((bool)toggleButton.IsChecked);
+            LogListView.Items.Refresh();
         }
     }
 
@@ -244,28 +244,23 @@ namespace LogViewer {
             }
         }
 
-        public SolidColorBrush _LogTextColor;
-        public SolidColorBrush LogTextColor {
-            get => _LogTextColor;
-            set {
-                _LogTextColor = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LogTextColor)));
-            }
-        }
-
         public ColorThemeViewModel() {
-            ToggleDarkMode(false);
+            ToggleDarkMode(true);
         }
 
         public void ToggleDarkMode(bool Enabled) {
             if (Enabled) {
+                LwTextBlock.TextColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LogTextFgColorDarkMode));
                 ListViewBgColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LogListViewBgColorDarkMode));
                 LineNoBgColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LineNoColorDarkMode));
-                LogTextColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LogTextFgColorDarkMode));
             } else {
-                LogTextColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LogTextFgColor));
                 LineNoBgColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LineNoColor));
                 ListViewBgColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LogListViewBgNormalColor));
+                LwTextBlock.TextColor = (SolidColorBrush)(new BrushConverter().ConvertFrom(ControlStyleSchema.LogTextFgColor));
             }
+            LwTextBlock.TextColor.Freeze();
+            ListViewBgColor.Freeze();
+            LineNoBgColor.Freeze();
         }
     }
 
