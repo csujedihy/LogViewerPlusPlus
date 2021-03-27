@@ -58,7 +58,7 @@ namespace LogViewer {
         }
 
         private bool UserFilter(object item) {
-            if (Log.FilterToSearchResults) {
+            if (Log.FilterToSearchResults && SearchBox.Text.Length > 0) {
                 var log = item as Log;
                 if ((log.highlightState & Log.HighlightState.SearchResultHighlight) != 0) {
                     return true;
@@ -229,8 +229,6 @@ namespace LogViewer {
     public class ColorThemeViewModel : INotifyPropertyChanged {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public static SolidColorBrush LogTextBgTransparentBrush = Brushes.Transparent;
-
         #region Light Theme
         public static SolidColorBrush LineNoLightModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("Crimson"));
         public static SolidColorBrush LogTextFgLightModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("Black"));
@@ -349,11 +347,10 @@ namespace LogViewer {
         public bool IsSelected {
             get => _IsSelected;
             set {
+                _IsSelected = value;
                 if (value) {
-                    _IsSelected = true;
                     highlightState |= HighlightState.SelectedHighlight;
                 } else {
-                    _IsSelected = false;
                     highlightState &= ~HighlightState.SelectedHighlight;
                 }
                 TryHighlight();
@@ -389,7 +386,7 @@ namespace LogViewer {
             } else if ((highlightState & HighlightState.SearchResultHighlight) != 0) {
                 LogRowBgBrush = MainWindow.colorThemeViewModel.LogTextBgSearchResultBrush;
             } else {
-                LogRowBgBrush = ColorThemeViewModel.LogTextBgTransparentBrush;
+                LogRowBgBrush = Brushes.Transparent;
             }
         }
 
