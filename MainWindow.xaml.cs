@@ -60,7 +60,7 @@ namespace LogViewer {
         private bool UserFilter(object item) {
             if (Log.FilterToSearchResults && SearchBox.Text.Length > 0) {
                 var log = item as Log;
-                if ((log.highlightState & Log.HighlightState.SearchResultHighlight) != 0) {
+                if ((log.HighlightState & Log.LogHighlightState.SearchResultHighlight) != 0) {
                     return true;
                 } else {
                     return false;
@@ -95,29 +95,25 @@ namespace LogViewer {
         }
 
         private void PrevButton_Click(object sender, RoutedEventArgs e) {
-            Log.WorkerQueue.QueueTask(() => {
-                var log = Log.GetPrevSearchResult();
-                if (log != null) {
-                    Dispatcher.Invoke(() => {
-                        LogListView.SelectedItem = log;
-                        LogListView.ScrollIntoView(LogListView.SelectedItem);
-                        SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
-                    });
-                }
-            });
+            var log = Log.GetPrevSearchResult();
+            if (log != null) {
+                Dispatcher.Invoke(() => {
+                    LogListView.SelectedItem = log;
+                    LogListView.ScrollIntoView(LogListView.SelectedItem);
+                    SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+                });
+            }
         }
 
         private void NextButton_Click(object sender, RoutedEventArgs e) {
-            Log.WorkerQueue.QueueTask(() => {
-                var log = Log.GetNextSearchResult();
-                if (log != null) {
-                    Dispatcher.Invoke(() => {
-                        LogListView.SelectedItem = log;
-                        LogListView.ScrollIntoView(LogListView.SelectedItem);
-                        SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
-                    });
-                }
-            });
+            var log = Log.GetNextSearchResult();
+            if (log != null) {
+                Dispatcher.Invoke(() => {
+                    LogListView.SelectedItem = log;
+                    LogListView.ScrollIntoView(LogListView.SelectedItem);
+                    SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+                });
+            }
         }
 
         private void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
@@ -135,10 +131,10 @@ namespace LogViewer {
             }
         }
 
-        private void UpdateSearchResult(Log log) {
+        private void UpdateSearchResult(Log log, int numResults) {
             Dispatcher.Invoke(() => {
                 if (log != null) {
-                    SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+                    SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, numResults);
                     LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
                     LogListView.SelectedItem = Log.GetCurrentSearchResult();
                 } else {
@@ -152,6 +148,7 @@ namespace LogViewer {
         private void SearchBoxTextChanged(object sender, TextChangedEventArgs e) {
             var SearchTextBox = (TextBox)sender;
             string SearchTextBoxContent = SearchTextBox.Text;
+            UpdateUIBeforeSearch();
             Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
         }
 
@@ -164,6 +161,7 @@ namespace LogViewer {
             }
 
             string SearchTextBoxContent = SearchBox.Text;
+            UpdateUIBeforeSearch();
             Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
         }
 
@@ -176,6 +174,7 @@ namespace LogViewer {
             }
 
             string SearchTextBoxContent = SearchBox.Text;
+            UpdateUIBeforeSearch();
             Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
         }
 
@@ -188,6 +187,7 @@ namespace LogViewer {
             }
 
             string SearchTextBoxContent = SearchBox.Text;
+            UpdateUIBeforeSearch();
             Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
         }
 
@@ -210,6 +210,12 @@ namespace LogViewer {
                     });
                 }).Start();
             }
+        }
+
+        private void UpdateUIBeforeSearch() {
+            SearchResultTextBox.Text = "Searching...";
+            FilterToggle.IsChecked = Log.FilterToSearchResults = false;
+            CollectionViewSource.GetDefaultView(LogListView.ItemsSource).Refresh();
         }
 
         private void FilterToggle_Click(object sender, RoutedEventArgs e) {
@@ -312,7 +318,7 @@ namespace LogViewer {
 
     public class Log : INotifyPropertyChanged {
         [Flags]
-        public enum HighlightState {
+        public enum LogHighlightState {
             NoHighlight = 0,
             SearchResultHighlight = 1,
             SelectedHighlight = 2,
@@ -328,45 +334,45 @@ namespace LogViewer {
         public string Text { get; set; }
         public string LineNoText { get; set; }
         public int LineNoWidth { get; set; }
-        private Visibility _TextSelectableBoxVisibility;
+        private Visibility _textSelectableBoxVisibility;
         public Visibility TextSelectableBoxVisibility {
-            get => _TextSelectableBoxVisibility;
-            set { _TextSelectableBoxVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextSelectableBoxVisibility))); }
+            get => _textSelectableBoxVisibility;
+            set { _textSelectableBoxVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextSelectableBoxVisibility))); }
         }
-        private Visibility _TextBlockVisibility;
+        private Visibility _textBlockVisibility;
         public Visibility TextBlockVisibility {
-            get => _TextBlockVisibility;
-            set { _TextBlockVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextBlockVisibility))); }
+            get => _textBlockVisibility;
+            set { _textBlockVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextBlockVisibility))); }
         }
-        private SolidColorBrush _LogRowBgBrush;
+        private SolidColorBrush _logRowBgBrush;
         public SolidColorBrush LogRowBgBrush {
-            get => _LogRowBgBrush;
-            set { _LogRowBgBrush = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LogRowBgBrush))); }
+            get => _logRowBgBrush;
+            set { _logRowBgBrush = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LogRowBgBrush))); }
         }
-        private bool _IsSelected;
+        private bool _isSelected;
         public bool IsSelected {
-            get => _IsSelected;
+            get => _isSelected;
             set {
-                _IsSelected = value;
+                _isSelected = value;
                 if (value) {
-                    highlightState |= HighlightState.SelectedHighlight;
+                    HighlightState |= LogHighlightState.SelectedHighlight;
                 } else {
-                    highlightState &= ~HighlightState.SelectedHighlight;
+                    HighlightState &= ~LogHighlightState.SelectedHighlight;
                 }
                 TryHighlight();
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
             }
         }
-        public HighlightState highlightState = HighlightState.NoHighlight;
+        public LogHighlightState HighlightState = LogHighlightState.NoHighlight;
         public int LineNo;
         public static SmartCollection<Log> Logs = new SmartCollection<Log>();
         public static List<Log> SearchResults = new List<Log>();
         private volatile static bool StopSearch = false;
         private static int SearchMatchesIndicesPos = -1;
-        public static BackgroundQueue WorkerQueue = new BackgroundQueue();
         public static Log LogInTextSelectionState;
         public static LogSearchMode SearchMode = LogSearchMode.None;
         private static volatile ManualResetEvent SignalEvent = new ManualResetEvent(true);
+        private static BackgroundQueue _workerQueue = new BackgroundQueue();
         public static bool FilterToSearchResults = false;
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -374,16 +380,16 @@ namespace LogViewer {
             this.Text = Text;
             this.LineNo = LineNo;
             this.LineNoText = this.LineNo.ToString();
-            this.highlightState = HighlightState.NoHighlight;
+            this.HighlightState = LogHighlightState.NoHighlight;
             this.TextBlockVisibility = Visibility.Visible;
             this.TextSelectableBoxVisibility = Visibility.Hidden;
             this.TryHighlight();
         }
 
         public void TryHighlight() {
-            if ((highlightState & HighlightState.SelectedHighlight) != 0) {
+            if ((HighlightState & LogHighlightState.SelectedHighlight) != 0) {
                 LogRowBgBrush = MainWindow.colorThemeViewModel.LogTextBgSelectedBrush;
-            } else if ((highlightState & HighlightState.SearchResultHighlight) != 0) {
+            } else if ((HighlightState & LogHighlightState.SearchResultHighlight) != 0) {
                 LogRowBgBrush = MainWindow.colorThemeViewModel.LogTextBgSearchResultBrush;
             } else {
                 LogRowBgBrush = Brushes.Transparent;
@@ -392,7 +398,7 @@ namespace LogViewer {
 
         public static void ClearSearchResults() {
             foreach (var log in SearchResults) {
-                log.highlightState &= ~HighlightState.SearchResultHighlight;
+                log.HighlightState &= ~LogHighlightState.SearchResultHighlight;
                 log.TryHighlight();
             }
             SearchResults.Clear();
@@ -411,6 +417,9 @@ namespace LogViewer {
         }
 
         public static Log GetNextSearchResult() {
+            SignalEvent.WaitOne();
+            SignalEvent.Reset();
+
             if (SearchResults.Count == 0 || SearchMatchesIndicesPos >= SearchResults.Count - 1) {
                 return null;
             }
@@ -419,6 +428,9 @@ namespace LogViewer {
         }
 
         public static Log GetPrevSearchResult() {
+            SignalEvent.WaitOne();
+            SignalEvent.Reset();
+
             if (SearchResults.Count == 0 || SearchMatchesIndicesPos <= 0) {
                 return null;
             }
@@ -426,27 +438,27 @@ namespace LogViewer {
             return SearchResults[--SearchMatchesIndicesPos];
         }
 
-        private static bool SearchInLogText(string Text, string Pattern) {
+        private static bool SearchPatternInText(string text, string pattern) {
             bool IgnoreCase = ((SearchMode & LogSearchMode.CaseSensitive) == 0);
             if ((SearchMode & LogSearchMode.Regex) != 0) {
                 return Regex.IsMatch(
-                    Text, Pattern, RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
+                    text, pattern, RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
             } else if ((SearchMode & LogSearchMode.WholeWordMatch) != 0) {
                 // The simple algorithm here is use \b<regex>\b to find the whole word match.
                 // If the first character or the last character is a separator, then remove the corresponding \b.
-                var leftPattern = char.IsPunctuation(Text[0]) ? @"" : @"\b";
-                var rightPattern = char.IsPunctuation(Text[Text.Length - 1]) ? @"" : @"\b";
-                var FinalPattern = string.Format(@"{0}{1}{2}", leftPattern, Regex.Escape(Pattern), rightPattern);
+                var leftPattern = char.IsPunctuation(text[0]) ? @"" : @"\b";
+                var rightPattern = char.IsPunctuation(text[text.Length - 1]) ? @"" : @"\b";
+                var FinalPattern = string.Format(@"{0}{1}{2}", leftPattern, Regex.Escape(pattern), rightPattern);
                 return Regex.IsMatch(
-                    Text, FinalPattern,
+                    text, FinalPattern,
                     RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
             } else {
                 return
-                    Text.IndexOf(Pattern, IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) != -1;
+                    text.IndexOf(pattern, IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) != -1;
             }
         }
 
-        public static void SearchInLogs(String Text, Action<Log> action) {
+        public static void SearchInLogs(String pattern, Action<Log, int> SearchCompleteCallback) {
             StopSearch = true;
             SignalEvent.WaitOne();
             StopSearch = false;
@@ -454,14 +466,14 @@ namespace LogViewer {
             new Thread(() => {
                 ClearSearchResults();
 
-                if (Text.Length > 0) {
+                if (pattern.Length > 0) {
                     for (int i = 0; i < Logs.Count; ++i) {
                         if (StopSearch) {
                             break;
                         }
-                        if (Logs[i].Text.Length > 0 && SearchInLogText(Logs[i].Text, Text)) {
+                        if (Logs[i].Text.Length > 0 && SearchPatternInText(Logs[i].Text, pattern)) {
                             SearchResults.Add(Logs[i]);
-                            Logs[i].highlightState |= HighlightState.SearchResultHighlight;
+                            Logs[i].HighlightState |= LogHighlightState.SearchResultHighlight;
                             Logs[i].TryHighlight();
                         }
                     }
@@ -471,8 +483,10 @@ namespace LogViewer {
                     SearchMatchesIndicesPos = 0;
                 }
 
+                var firstSearchResult = GetCurrentSearchResult();
+                _workerQueue.QueueTask(() => {
+                    SearchCompleteCallback(firstSearchResult, SearchResults.Count); });
                 SignalEvent.Set();
-                new Thread(() => { action(GetCurrentSearchResult()); }).Start();
             }).Start();
         }
 
@@ -482,10 +496,10 @@ namespace LogViewer {
             Logs.Clear();
         }
 
-        public static void LoadLogFile(string Path) {
+        public static void LoadLogFile(string path) {
             int i = 0;
             string Line;
-            var LogFileStream = new StreamReader(Path);
+            var LogFileStream = new StreamReader(path);
             var tempLogs = new List<Log>();
 
             ResetLogs();
