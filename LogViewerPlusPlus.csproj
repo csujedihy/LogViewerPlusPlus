@@ -7,6 +7,9 @@
     <AssemblyName>LogViewer</AssemblyName>
     <RootNamespace>LogViewer</RootNamespace>
     <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
+    <Authors>Yi Huang</Authors>
+    <Company />
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

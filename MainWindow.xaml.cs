@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -485,7 +484,8 @@ namespace LogViewer {
 
                 var firstSearchResult = GetCurrentSearchResult();
                 _workerQueue.QueueTask(() => {
-                    SearchCompleteCallback(firstSearchResult, SearchResults.Count); });
+                    SearchCompleteCallback(firstSearchResult, SearchResults.Count);
+                });
                 SignalEvent.Set();
             }).Start();
         }
@@ -509,7 +509,7 @@ namespace LogViewer {
             }
             Logs.AddRange(tempLogs);
             for (i = 0; i < Logs.Count; ++i) {
-                Logs[i].LineNoWidth = Logs.Last().LineNoText.Length * 8;
+                Logs[i].LineNoWidth = Logs[Logs.Count - 1].LineNoText.Length * 8;
             }
         }
     }
