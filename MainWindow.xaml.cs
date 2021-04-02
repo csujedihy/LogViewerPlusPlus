@@ -416,25 +416,33 @@ namespace LogViewer {
         }
 
         public static Log GetNextSearchResult() {
+            Log retVal = null;
             SignalEvent.WaitOne();
-            SignalEvent.Reset();
 
             if (SearchResults.Count == 0 || SearchMatchesIndicesPos >= SearchResults.Count - 1) {
-                return null;
+                goto Done;
             }
 
-            return SearchResults[++SearchMatchesIndicesPos];
+            retVal = SearchResults[++SearchMatchesIndicesPos];
+
+        Done:
+            SignalEvent.Set();
+            return retVal;
         }
 
         public static Log GetPrevSearchResult() {
+            Log retVal = null;
             SignalEvent.WaitOne();
-            SignalEvent.Reset();
 
             if (SearchResults.Count == 0 || SearchMatchesIndicesPos <= 0) {
-                return null;
+                goto Done;
             }
 
-            return SearchResults[--SearchMatchesIndicesPos];
+            retVal = SearchResults[--SearchMatchesIndicesPos];
+
+        Done:
+            SignalEvent.Set();
+            return retVal;
         }
 
         private static bool SearchPatternInText(string text, string pattern) {
