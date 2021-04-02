@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -44,7 +45,7 @@ namespace LogViewer {
                 if (Log.LogInTextSelectionState != null) {
                     if (log == null || Log.LogInTextSelectionState != log) {
                         Log.LogInTextSelectionState.TextBlockVisibility = Visibility.Visible;
-                        Log.LogInTextSelectionState.TextSelectableBoxVisibility = Visibility.Hidden;
+                        Log.LogInTextSelectionState.TextSelectableBoxVisibility = Visibility.Collapsed;
                     }
                 }
             };
@@ -72,6 +73,12 @@ namespace LogViewer {
         private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e) {
             var openFileDialog = new OpenFileDialog();
             if (openFileDialog.ShowDialog() == true) {
+                LoadingWindow dlg = new LoadingWindow();
+
+                // Configure the dialog box
+                dlg.Owner = this;
+                // Open the dialog box modally
+                dlg.ShowDialog();
                 Log.LoadLogFile(openFileDialog.FileName);
             }
         }
@@ -117,7 +124,7 @@ namespace LogViewer {
 
         private void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
             var log = (sender as FrameworkElement).DataContext as Log;
-            log.TextBlockVisibility = Visibility.Hidden;
+            log.TextBlockVisibility = Visibility.Collapsed;
             log.TextSelectableBoxVisibility = Visibility.Visible;
             Log.LogInTextSelectionState = log;
         }
@@ -126,7 +133,7 @@ namespace LogViewer {
             var log = Log.LogInTextSelectionState;
             if (log != null) {
                 log.TextBlockVisibility = Visibility.Visible;
-                log.TextSelectableBoxVisibility = Visibility.Hidden;
+                log.TextSelectableBoxVisibility = Visibility.Collapsed;
             }
         }
 
@@ -381,7 +388,7 @@ namespace LogViewer {
             this.LineNoText = this.LineNo.ToString();
             this.HighlightState = LogHighlightState.NoHighlight;
             this.TextBlockVisibility = Visibility.Visible;
-            this.TextSelectableBoxVisibility = Visibility.Hidden;
+            this.TextSelectableBoxVisibility = Visibility.Collapsed;
             this.TryHighlight();
         }
 

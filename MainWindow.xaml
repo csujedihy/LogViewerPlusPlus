@@ -108,10 +108,14 @@
         <ListView
                 Grid.Row="1"
                 x:Name="LogListView"
-                Height="Auto"
                 MaxHeight="1000"
                 Width="Auto"
                 ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                ScrollViewer.VerticalScrollBarVisibility="Visible"
+                VirtualizingPanel.VirtualizationMode="Recycling"
+                VirtualizingPanel.CacheLength="1"
+                VirtualizingPanel.ScrollUnit="Item"
+                VirtualizingPanel.IsVirtualizing="True"
                 SelectionChanged="LogListView_SelectionChanged"
                 HorizontalAlignment="Stretch"
                 Drop="LogListView_Drop"
@@ -140,17 +144,18 @@
                                 Grid.Column="1"
                                 Margin="10,0,0,0"
                                 Visibility="{Binding TextBlockVisibility}"
-                                Text="{Binding Text}"
+                                Text="{Binding Text, Mode=OneTime}"
                                 Width="Auto" />
                             <TextBox
                                 x:Name="LogTextBox"
                                 Grid.Column="1"
+                                FontFamily="Consolas"
                                 FontWeight="Medium"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Center"
                                 IsReadOnly="True"
                                 Visibility="{Binding TextSelectableBoxVisibility, Mode=OneWay}"
-                                Text="{Binding Text}"
+                                Text="{Binding Text, Mode=OneTime}"
                                 Width="Auto" />
                         </Grid>
                     </Border>
