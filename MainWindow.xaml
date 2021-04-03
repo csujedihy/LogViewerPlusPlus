@@ -116,6 +116,7 @@
                 HorizontalAlignment="Stretch"
                 Drop="LogListView_Drop"
                 AllowDrop="true"
+                PreviewKeyDown="LogListView_PreviewKeyDown"
                 DataContext="{x:Static local:MainWindow.colorThemeViewModel}"
                 Background="{Binding ListViewBgBrush}" >
             <ListView.ItemTemplate>

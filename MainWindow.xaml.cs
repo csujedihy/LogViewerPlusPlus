@@ -26,14 +26,7 @@ namespace LogViewer {
             var window = Window.GetWindow(this);
             window.KeyDown += (sender, e) => {
                 if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control) {
-                    var sb = new StringBuilder();
-                    var selectedItems = LogListView.SelectedItems;
-
-                    foreach (var item in selectedItems) {
-                        sb.Append($"{((Log)item).Text}\n");
-                    }
-
-                    Clipboard.SetDataObject(sb.ToString());
+                    Log.CopySelectedLogs();
                 } else if (e.Key == Key.G && Keyboard.Modifiers == ModifierKeys.Control) {
                     GoToLineBox.Focus();
                 } else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control) {
@@ -254,6 +247,13 @@ namespace LogViewer {
                 SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
             }
         }
+
+        private void LogListView_PreviewKeyDown(object sender, KeyEventArgs e) {
+            if (e.Key == Key.A && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))) {
+                Log.SelectAllLogs();
+                e.Handled = true;
+            }
+        }
     }
 
     public class ColorThemeViewModel : INotifyPropertyChanged {
@@ -419,6 +419,24 @@ namespace LogViewer {
             } else {
                 LogRowBgBrush = Brushes.Transparent;
             }
+        }
+
+        public static void SelectAllLogs() {
+            foreach (var log in Logs) {
+                log.IsSelected = true;
+            }
+        }
+
+        public static void CopySelectedLogs() {
+            var sb = new StringBuilder();
+
+            foreach (var log in Logs) {
+                if (log.IsSelected) {
+                    sb.Append($"{log.Text}\n");
+                }
+            }
+
+            Clipboard.SetDataObject(sb.ToString());
         }
 
         public static void ClearSearchResults() {
