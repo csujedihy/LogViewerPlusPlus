@@ -72,16 +72,29 @@ namespace LogViewer {
 
         private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e) {
             var openFileDialog = new OpenFileDialog();
+            var loadingWindow = new ProgressWindow();
+            loadingWindow.Owner = this;
             if (openFileDialog.ShowDialog() == true) {
-                LoadingWindow dlg = new LoadingWindow();
 
-                // Configure the dialog box
-                dlg.Owner = this;
-                // Open the dialog box modally
-                dlg.ShowDialog();
-                Log.LoadLogFile(openFileDialog.FileName);
+                loadingWindow.Loaded += (s, _) => {
+                    BackgroundWorker worker = new BackgroundWorker();
+                    worker.DoWork += (ws, wargs) => {
+                        Debug.WriteLine("bg worker");
+
+                        Dispatcher.Invoke(() => {
+                            Thread.Sleep(2000);
+                            Log.LoadLogFile(openFileDialog.FileName);
+                        });
+                    };
+                    worker.RunWorkerCompleted += (ws, workerArgs) => loadingWindow.Close();
+                    worker.RunWorkerAsync();
+                };
+
+                loadingWindow.ShowDialog();
             }
         }
+
+  
 
         private void CloseCommandHandler(object sender, ExecutedRoutedEventArgs e) {
             Close();
@@ -514,12 +527,12 @@ namespace LogViewer {
         public static void LoadLogFile(string path) {
             int i = 0;
             string Line;
-            var LogFileStream = new StreamReader(path);
+            var logFileStream = new StreamReader(path);
             var tempLogs = new List<Log>();
 
             ResetLogs();
 
-            while ((Line = LogFileStream.ReadLine()) != null) {
+            while ((Line = logFileStream.ReadLine()) != null) {
                 tempLogs.Add(new Log(Line, ++i));
             }
             Logs.AddRange(tempLogs);

@@ -17,9 +17,9 @@ namespace LogViewer
     /// <summary>
     /// Interaction logic for LoadingWindow.xaml
     /// </summary>
-    public partial class LoadingWindow : Window
+    public partial class ProgressWindow : Window
     {
-        public LoadingWindow()
+        public ProgressWindow()
         {
             InitializeComponent();
         }

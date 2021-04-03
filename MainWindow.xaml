@@ -127,12 +127,12 @@
                     <Border Padding="8" Width="Auto" Background="{Binding LogRowBgBrush}">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="{Binding LineNoWidth}" />
+                                <ColumnDefinition Width="{Binding LineNoWidth, Mode=OneTime}" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <TextBlock
                                 Grid.Column="0"
-                                Text="{Binding LineNoText}"
+                                Text="{Binding LineNoText, Mode=OneTime}"
                                 FontFamily="Consolas"
                                 FontWeight="Medium"
                                 TextAlignment="Right"
