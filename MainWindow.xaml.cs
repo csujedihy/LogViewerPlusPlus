@@ -20,11 +20,21 @@ namespace LogViewer {
         public static ColorThemeViewModel colorThemeViewModel = new ColorThemeViewModel();
         public MainWindow() {
             InitializeComponent();
-            LogListView.ItemsSource = Log.Logs;
+            Loaded += MainWindow_Loaded;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs _) {
             var view = (CollectionView)CollectionViewSource.GetDefaultView(LogListView.ItemsSource);
+            var border = (Border)LogListView.Template.FindName("Bd", LogListView);
+            if (border != null) {
+                border.Padding = new Thickness(0);
+            }
+            LogListView.ItemsSource = Log.Logs;
             view.Filter = UserFilter;
+            PrevButton.Click += SearchPrev;
+            NextButton.Click += SearchNext;
             var window = Window.GetWindow(this);
-            window.KeyDown += (sender, e) => {
+            this.KeyDown += (s, e) => {
                 if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control) {
                     Log.CopySelectedLogs();
                 } else if (e.Key == Key.G && Keyboard.Modifiers == ModifierKeys.Control) {
@@ -37,49 +47,21 @@ namespace LogViewer {
                     SearchNext(this, null);
                 }
             };
-            window.MouseDown += (sender, e) => {
-                var log = ((sender as FrameworkElement).DataContext) as Log;
-                if (Log.LogInTextSelectionState != null) {
-                    if (log == null || Log.LogInTextSelectionState != log) {
-                        Log.LogInTextSelectionState.TextBlockVisibility = Visibility.Visible;
-                        Log.LogInTextSelectionState.TextSelectableBoxVisibility = Visibility.Collapsed;
-                    }
-                }
-            };
-            Loaded += (sender, _) => {
-                var border = (Border)LogListView.Template.FindName("Bd", LogListView);
-                if (border != null) {
-                    border.Padding = new Thickness(0);
-                }
-                PrevButton.Click += SearchPrev;
-                NextButton.Click += SearchNext;
-            };
-        }
-
-        private bool UserFilter(object item) {
-            if (Log.FilterToSearchResults && SearchBox.Text.Length > 0) {
-                var log = item as Log;
-                if ((log.HighlightState & Log.LogHighlightState.SearchResultHighlight) != 0) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                return true;
-            }
-        }
-
-        private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e) {
-            var openFileDialog = new OpenFileDialog();
-            if (openFileDialog.ShowDialog() == true) {
-                LoadLogFileAndShowProgress(openFileDialog.FileName);
-            }
+            window.MouseDown += Window_MouseDown;
         }
 
         private void CloseCommandHandler(object sender, ExecutedRoutedEventArgs e) {
             Close();
         }
 
+        private void LogListView_PreviewKeyDown(object sender, KeyEventArgs e) {
+            if (e.Key == Key.A && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))) {
+                Log.SelectAllLogs();
+                e.Handled = true;
+            }
+        }
+
+        #region Go to line
         private void GoToLineBoxTextChanged(object sender, TextChangedEventArgs e) {
             var SearchTextBox = (TextBox)sender;
             try {
@@ -92,7 +74,9 @@ namespace LogViewer {
                 return;
             }
         }
+        #endregion
 
+        #region Switch textbox view for double-click
         private void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
             var log = (sender as FrameworkElement).DataContext as Log;
             log.TextBlockVisibility = Visibility.Collapsed;
@@ -108,27 +92,18 @@ namespace LogViewer {
             }
         }
 
-        private void UpdateSearchResult(Log log, int numResults) {
-            Dispatcher.Invoke(() => {
-                if (log != null) {
-                    SearchResultTextBox.Text = String.Format("1 of {0}", numResults);
-                    LogListView.ScrollIntoView(log);
-                    LogListView.SelectedItem = log;
-                } else {
-                    Dispatcher.Invoke(() => {
-                        SearchResultTextBox.Text = "No results";
-                    });
+        private void Window_MouseDown(object sender, MouseButtonEventArgs e) {
+            var log = ((sender as FrameworkElement).DataContext) as Log;
+            if (Log.LogInTextSelectionState != null) {
+                if (log == null || Log.LogInTextSelectionState != log) {
+                    Log.LogInTextSelectionState.TextBlockVisibility = Visibility.Visible;
+                    Log.LogInTextSelectionState.TextSelectableBoxVisibility = Visibility.Collapsed;
                 }
-            });
+            }
         }
+        #endregion
 
-        private void SearchBoxTextChanged(object sender, TextChangedEventArgs e) {
-            var SearchTextBox = (TextBox)sender;
-            string SearchTextBoxContent = SearchTextBox.Text;
-            UpdateUIBeforeSearch();
-            Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
-        }
-
+        #region Toggle Handlers
         private void CaseSensitiveToggle_Click(object sender, RoutedEventArgs e) {
             var toggleButton = sender as ToggleButton;
             if ((bool)toggleButton.IsChecked) {
@@ -168,6 +143,22 @@ namespace LogViewer {
             Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
         }
 
+        private void FilterToggle_Click(object sender, RoutedEventArgs e) {
+            var toggleButton = sender as ToggleButton;
+            Log.FilterToSearchResults = (bool)toggleButton.IsChecked;
+            CollectionViewSource.GetDefaultView(LogListView.ItemsSource).Refresh();
+        }
+
+        private void DarkModeToggle_Click(object sender, RoutedEventArgs e) {
+            foreach (var log in Log.Logs) {
+                log.TryHighlight();
+            }
+            LogListView.Items.Refresh();
+        }
+
+        #endregion
+
+        #region Open log file
         private void LoadLogFileAndShowProgress(string path) {
             var loadingWindow = new ProgressWindow
             {
@@ -194,6 +185,13 @@ namespace LogViewer {
             loadingWindow.ShowDialog();
         }
 
+        private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e) {
+            var openFileDialog = new OpenFileDialog();
+            if (openFileDialog.ShowDialog() == true) {
+                LoadLogFileAndShowProgress(openFileDialog.FileName);
+            }
+        }
+
         private void LogListView_Drop(object sender, DragEventArgs e) {
             if (e.Data.GetDataPresent(DataFormats.FileDrop)) {
                 string[] Path = (string[])e.Data.GetData(DataFormats.FileDrop);
@@ -210,24 +208,27 @@ namespace LogViewer {
                 LoadLogFileAndShowProgress(Path[0]);
             }
         }
+        #endregion
+
+        #region Search UI logic
+        private void UpdateSearchResult(Log log, int numResults) {
+            Dispatcher.Invoke(() => {
+                if (log != null) {
+                    SearchResultTextBox.Text = String.Format("1 of {0}", numResults);
+                    LogListView.ScrollIntoView(log);
+                    LogListView.SelectedItem = log;
+                } else {
+                    Dispatcher.Invoke(() => {
+                        SearchResultTextBox.Text = "No results";
+                    });
+                }
+            });
+        }
 
         private void UpdateUIBeforeSearch() {
             SearchResultTextBox.Text = "Searching...";
             FilterToggle.IsChecked = Log.FilterToSearchResults = false;
             CollectionViewSource.GetDefaultView(LogListView.ItemsSource).Refresh();
-        }
-
-        private void FilterToggle_Click(object sender, RoutedEventArgs e) {
-            var toggleButton = sender as ToggleButton;
-            Log.FilterToSearchResults = (bool)toggleButton.IsChecked;
-            CollectionViewSource.GetDefaultView(LogListView.ItemsSource).Refresh();
-        }
-
-        private void DarkModeToggle_Click(object sender, RoutedEventArgs e) {
-            foreach (var log in Log.Logs) {
-                log.TryHighlight();
-            }
-            LogListView.Items.Refresh();
         }
 
         private void SearchNext(object sender, RoutedEventArgs e) {
@@ -248,18 +249,32 @@ namespace LogViewer {
             }
         }
 
-        private void LogListView_PreviewKeyDown(object sender, KeyEventArgs e) {
-            if (e.Key == Key.A && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))) {
-                Log.SelectAllLogs();
-                e.Handled = true;
+        private void SearchBoxTextChanged(object sender, TextChangedEventArgs e) {
+            var SearchTextBox = (TextBox)sender;
+            string SearchTextBoxContent = SearchTextBox.Text;
+            UpdateUIBeforeSearch();
+            Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
+        }
+
+        private bool UserFilter(object item) {
+            if (Log.FilterToSearchResults && SearchBox.Text.Length > 0) {
+                var log = item as Log;
+                if ((log.HighlightState & Log.LogHighlightState.SearchResultHighlight) != 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
             }
         }
+        #endregion
     }
 
     public class ColorThemeViewModel : INotifyPropertyChanged {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        #region Light Theme
+        #region Light theme constants
         public static SolidColorBrush LineNoLightModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("Crimson"));
         public static SolidColorBrush LogTextFgLightModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("Black"));
         public static SolidColorBrush LogListViewBgLightModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("Transparent"));
@@ -267,7 +282,7 @@ namespace LogViewer {
         public static SolidColorBrush LogTextBgSearchResultLightModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("LightSkyBlue"));
         #endregion
 
-        #region Dark Theme
+        #region Dark theme constants
         public static SolidColorBrush LineNoDarkModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("#606D83"));
         public static SolidColorBrush LogTextFgDarkModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("#E3E3E3"));
         public static SolidColorBrush LogListViewBgDarkModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("#282C34"));
@@ -275,11 +290,12 @@ namespace LogViewer {
         public static SolidColorBrush LogTextBgSearchResultDarkModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("DarkSlateBlue"));
         #endregion
 
-        #region Text Weight
+        #region Text weight constants
         public static string LogTextNormalWeight = "Normal";
         public static string LogTextSearchResultWeight = "DemiBold";
         #endregion
 
+        #region Properties
         public SolidColorBrush LogTextBgSelectedBrush {
             get => DarkModeEnabled ? LogTextBgSelectedDarkModeBrush : LogTextBgSelectedLightModeBrush;
         }
@@ -312,6 +328,7 @@ namespace LogViewer {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DarkModeEnabled)));
             }
         }
+        #endregion
 
         public ColorThemeViewModel() {
             LineNoLightModeBrush.Freeze();
@@ -355,6 +372,8 @@ namespace LogViewer {
             WholeWordMatch = 4,
             Filter = 8,
         };
+
+        #region Properties
         public string Text { get; set; }
         public string LineNoText { get; set; }
         public int LineNoWidth { get; set; }
@@ -387,6 +406,8 @@ namespace LogViewer {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
             }
         }
+        #endregion
+
         public LogHighlightState HighlightState = LogHighlightState.NoHighlight;
         public int LineNo;
         public static SmartCollection<Log> Logs = new SmartCollection<Log>();
