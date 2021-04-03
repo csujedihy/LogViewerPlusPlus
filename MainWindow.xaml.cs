@@ -38,6 +38,10 @@ namespace LogViewer {
                     GoToLineBox.Focus();
                 } else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control) {
                     SearchBox.Focus();
+                } else if (e.Key == Key.F3) {
+                    SearchPrev(this, null);
+                } else if (e.Key == Key.F4) {
+                    SearchNext(this, null);
                 }
             };
             window.MouseDown += (sender, e) => {
@@ -54,6 +58,8 @@ namespace LogViewer {
                 if (border != null) {
                     border.Padding = new Thickness(0);
                 }
+                PrevButton.Click += SearchPrev;
+                NextButton.Click += SearchNext;
             };
         }
 
@@ -91,24 +97,6 @@ namespace LogViewer {
                 }
             } catch (FormatException) {
                 return;
-            }
-        }
-
-        private void PrevButton_Click(object sender, RoutedEventArgs e) {
-            var log = Log.GetPrevSearchResult();
-            if (log != null) {
-                LogListView.SelectedItem = log;
-                LogListView.ScrollIntoView(LogListView.SelectedItem);
-                SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
-            }
-        }
-
-        private void NextButton_Click(object sender, RoutedEventArgs e) {
-            var log = Log.GetNextSearchResult();
-            if (log != null) {
-                LogListView.SelectedItem = log;
-                LogListView.ScrollIntoView(LogListView.SelectedItem);
-                SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
             }
         }
 
@@ -247,6 +235,24 @@ namespace LogViewer {
                 log.TryHighlight();
             }
             LogListView.Items.Refresh();
+        }
+
+        private void SearchNext(object sender, RoutedEventArgs e) {
+            var log = Log.GetNextSearchResult();
+            if (log != null) {
+                LogListView.SelectedItem = log;
+                LogListView.ScrollIntoView(LogListView.SelectedItem);
+                SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+            }
+        }
+
+        private void SearchPrev(object sender, RoutedEventArgs e) {
+            var log = Log.GetPrevSearchResult();
+            if (log != null) {
+                LogListView.SelectedItem = log;
+                LogListView.ScrollIntoView(LogListView.SelectedItem);
+                SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+            }
         }
     }
 

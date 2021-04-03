@@ -9,11 +9,9 @@
         Title="LogViewer++" Height="450" Width="800" >
     <Window.CommandBindings>
         <CommandBinding
-            Command="ApplicationCommands.Open"
-            Executed="OpenCommandHandler" />
+            Command="ApplicationCommands.Open" Executed="OpenCommandHandler" />
         <CommandBinding
-            Command="ApplicationCommands.Close"
-            Executed="CloseCommandHandler" />
+            Command="ApplicationCommands.Close" Executed="CloseCommandHandler" />
     </Window.CommandBindings>
     <Window.Resources>
         <Style x:Key="ToolLabelStyle" TargetType="{x:Type TextBlock}">
@@ -197,8 +195,8 @@
                 </StackPanel>
             </Border>
             <TextBlock x:Name="SearchResultTextBox" Text="No results" Style="{StaticResource ToolLabelStyle}" />
-            <Button x:Name="PrevButton" Content="&#x1f844;" Click="PrevButton_Click" Style="{StaticResource SearchNavButtonStyle}" ToolTip="Next result"/>
-            <Button x:Name="NextButton" Content="&#x1f846;" Click="NextButton_Click" Style="{StaticResource SearchNavButtonStyle}" ToolTip="Previous result"/>
+            <Button x:Name="PrevButton" Content="&#x1f844;" Style="{StaticResource SearchNavButtonStyle}" ToolTip="Previous result (F3)"/>
+            <Button x:Name="NextButton" Content="&#x1f846;" Style="{StaticResource SearchNavButtonStyle}" ToolTip="Next result (F4)"/>
             <ToggleButton
                         x:Name="FilterToggle"
                         Content="Filter"
