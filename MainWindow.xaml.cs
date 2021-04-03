@@ -72,29 +72,15 @@ namespace LogViewer {
 
         private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e) {
             var openFileDialog = new OpenFileDialog();
-            var loadingWindow = new ProgressWindow();
-            loadingWindow.Owner = this;
+            var loadingWindow = new ProgressWindow
+            {
+                Owner = this
+            };
+
             if (openFileDialog.ShowDialog() == true) {
-
-                loadingWindow.Loaded += (s, _) => {
-                    BackgroundWorker worker = new BackgroundWorker();
-                    worker.DoWork += (ws, wargs) => {
-                        Debug.WriteLine("bg worker");
-
-                        Dispatcher.Invoke(() => {
-                            Thread.Sleep(2000);
-                            Log.LoadLogFile(openFileDialog.FileName);
-                        });
-                    };
-                    worker.RunWorkerCompleted += (ws, workerArgs) => loadingWindow.Close();
-                    worker.RunWorkerAsync();
-                };
-
-                loadingWindow.ShowDialog();
+                LoadLogFileFromPath(openFileDialog.FileName);
             }
         }
-
-  
 
         private void CloseCommandHandler(object sender, ExecutedRoutedEventArgs e) {
             Close();
@@ -210,6 +196,33 @@ namespace LogViewer {
             Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
         }
 
+        private void LoadLogFileFromPath(string path) {
+            var loadingWindow = new ProgressWindow
+            {
+                Owner = this
+            };
+
+            Log.Logs.Clear();
+            loadingWindow.Loaded += (s, _) => {
+                BackgroundWorker worker = new BackgroundWorker();
+                worker.DoWork += (ws, wargs) => {
+                    Log.LoadLogFile(path,
+                        (progress) => {
+                            (s as Window).Dispatcher.Invoke(() => {
+                                loadingWindow.LoadingProgressBar.Value = progress;
+                            });
+                        }, (logs) => {
+                            Dispatcher.Invoke(() => {
+                                Log.Logs.AddRange(logs);
+                            });
+                        });
+                };
+                worker.RunWorkerCompleted += (ws, workerArgs) => loadingWindow.Close();
+                worker.RunWorkerAsync();
+            };
+            loadingWindow.ShowDialog();
+        }
+
         private void LogListView_Drop(object sender, DragEventArgs e) {
             if (e.Data.GetDataPresent(DataFormats.FileDrop)) {
                 string[] Path = (string[])e.Data.GetData(DataFormats.FileDrop);
@@ -223,11 +236,7 @@ namespace LogViewer {
                     return;
                 }
 
-                new Thread(() => {
-                    Dispatcher.Invoke(() => {
-                        Log.LoadLogFile(Path[0]);
-                    });
-                }).Start();
+                LoadLogFileFromPath(Path[0]);
             }
         }
 
@@ -518,27 +527,36 @@ namespace LogViewer {
             }).Start();
         }
 
-        private static void ResetLogs() {
-            LogInTextSelectionState = null;
-            ClearSearchResults();
-            Logs.Clear();
-        }
-
-        public static void LoadLogFile(string path) {
+        public static void LoadLogFile(string path, Action<long> progressCallback, Action<List<Log>> completionCallback) {
             int i = 0;
             string Line;
             var logFileStream = new StreamReader(path);
             var tempLogs = new List<Log>();
+            long length = new System.IO.FileInfo(path).Length;
+            long readBytes = 0;
+            long progress = 0;
 
-            ResetLogs();
+            SignalEvent.WaitOne();
+            LogInTextSelectionState = null;
+            ClearSearchResults();
 
             while ((Line = logFileStream.ReadLine()) != null) {
                 tempLogs.Add(new Log(Line, ++i));
+                var encoding = logFileStream.CurrentEncoding;
+                readBytes += encoding.GetByteCount(Line);
+                var currProgress = (readBytes * 100 / length);
+                if (currProgress > progress) {
+                    progress = currProgress;
+                    progressCallback(progress);
+                }
             }
-            Logs.AddRange(tempLogs);
-            for (i = 0; i < Logs.Count; ++i) {
-                Logs[i].LineNoWidth = Logs[Logs.Count - 1].LineNoText.Length * 8;
+
+            for (i = 0; i < tempLogs.Count; ++i) {
+                tempLogs[i].LineNoWidth = tempLogs[tempLogs.Count - 1].LineNoText.Length * 8;
             }
+
+            SignalEvent.Set();
+            completionCallback(tempLogs);
         }
     }
 }
