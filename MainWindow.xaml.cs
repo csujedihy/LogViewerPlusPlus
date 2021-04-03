@@ -20,20 +20,20 @@ namespace LogViewer {
         public static ColorThemeViewModel colorThemeViewModel = new ColorThemeViewModel();
         public MainWindow() {
             InitializeComponent();
+
             Loaded += MainWindow_Loaded;
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs _) {
-            var view = (CollectionView)CollectionViewSource.GetDefaultView(LogListView.ItemsSource);
             var border = (Border)LogListView.Template.FindName("Bd", LogListView);
             if (border != null) {
                 border.Padding = new Thickness(0);
             }
             LogListView.ItemsSource = Log.Logs;
+            var view = (CollectionView)CollectionViewSource.GetDefaultView(LogListView.ItemsSource);
             view.Filter = UserFilter;
             PrevButton.Click += SearchPrev;
             NextButton.Click += SearchNext;
-            var window = Window.GetWindow(this);
             this.KeyDown += (s, e) => {
                 if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control) {
                     Log.CopySelectedLogs();
@@ -47,7 +47,7 @@ namespace LogViewer {
                     SearchNext(this, null);
                 }
             };
-            window.MouseDown += Window_MouseDown;
+            this.MouseDown += Window_MouseDown;
         }
 
         private void CloseCommandHandler(object sender, ExecutedRoutedEventArgs e) {
