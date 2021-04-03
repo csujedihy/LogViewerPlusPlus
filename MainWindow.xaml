@@ -150,6 +150,7 @@
                                 Grid.Column="1"
                                 FontFamily="Consolas"
                                 FontWeight="Medium"
+                                Margin="10,0,0,0"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Center"
                                 IsReadOnly="True"
