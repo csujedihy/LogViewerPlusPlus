@@ -111,8 +111,6 @@
                 ScrollViewer.HorizontalScrollBarVisibility="Visible"
                 ScrollViewer.VerticalScrollBarVisibility="Visible"
                 VirtualizingPanel.VirtualizationMode="Recycling"
-                VirtualizingPanel.CacheLength="1"
-                VirtualizingPanel.ScrollUnit="Item"
                 VirtualizingPanel.IsVirtualizing="True"
                 SelectionChanged="LogListView_SelectionChanged"
                 HorizontalAlignment="Stretch"
