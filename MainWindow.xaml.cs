@@ -72,11 +72,6 @@ namespace LogViewer {
 
         private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e) {
             var openFileDialog = new OpenFileDialog();
-            var loadingWindow = new ProgressWindow
-            {
-                Owner = this
-            };
-
             if (openFileDialog.ShowDialog() == true) {
                 LoadLogFileAndShowProgress(openFileDialog.FileName);
             }
@@ -102,22 +97,18 @@ namespace LogViewer {
         private void PrevButton_Click(object sender, RoutedEventArgs e) {
             var log = Log.GetPrevSearchResult();
             if (log != null) {
-                Dispatcher.Invoke(() => {
-                    LogListView.SelectedItem = log;
-                    LogListView.ScrollIntoView(LogListView.SelectedItem);
-                    SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
-                });
+                LogListView.SelectedItem = log;
+                LogListView.ScrollIntoView(LogListView.SelectedItem);
+                SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
             }
         }
 
         private void NextButton_Click(object sender, RoutedEventArgs e) {
             var log = Log.GetNextSearchResult();
             if (log != null) {
-                Dispatcher.Invoke(() => {
-                    LogListView.SelectedItem = log;
-                    LogListView.ScrollIntoView(LogListView.SelectedItem);
-                    SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
-                });
+                LogListView.SelectedItem = log;
+                LogListView.ScrollIntoView(LogListView.SelectedItem);
+                SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
             }
         }
 
@@ -139,9 +130,9 @@ namespace LogViewer {
         private void UpdateSearchResult(Log log, int numResults) {
             Dispatcher.Invoke(() => {
                 if (log != null) {
-                    SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, numResults);
-                    LogListView.ScrollIntoView(Log.GetCurrentSearchResult());
-                    LogListView.SelectedItem = Log.GetCurrentSearchResult();
+                    SearchResultTextBox.Text = String.Format("1 of {0}", numResults);
+                    LogListView.ScrollIntoView(log);
+                    LogListView.SelectedItem = log;
                 } else {
                     Dispatcher.Invoke(() => {
                         SearchResultTextBox.Text = "No results";
@@ -398,7 +389,7 @@ namespace LogViewer {
         private static int SearchMatchesIndicesPos = -1;
         public static Log LogInTextSelectionState;
         public static LogSearchMode SearchMode = LogSearchMode.None;
-        private static volatile AutoResetEvent SignalEvent = new AutoResetEvent(true);
+        private static AutoResetEvent _signalEvent = new AutoResetEvent(true);
         private static BackgroundQueue _workerQueue = new BackgroundQueue();
         public static bool FilterToSearchResults = false;
         public event PropertyChangedEventHandler PropertyChanged;
@@ -445,7 +436,7 @@ namespace LogViewer {
 
         public static Log GetNextSearchResult() {
             Log retVal = null;
-            SignalEvent.WaitOne();
+            _signalEvent.WaitOne();
 
             if (SearchResults.Count == 0 || SearchMatchesIndicesPos >= SearchResults.Count - 1) {
                 goto Done;
@@ -454,13 +445,13 @@ namespace LogViewer {
             retVal = SearchResults[++SearchMatchesIndicesPos];
 
         Done:
-            SignalEvent.Set();
+            _signalEvent.Set();
             return retVal;
         }
 
         public static Log GetPrevSearchResult() {
             Log retVal = null;
-            SignalEvent.WaitOne();
+            _signalEvent.WaitOne();
 
             if (SearchResults.Count == 0 || SearchMatchesIndicesPos <= 0) {
                 goto Done;
@@ -469,7 +460,7 @@ namespace LogViewer {
             retVal = SearchResults[--SearchMatchesIndicesPos];
 
         Done:
-            SignalEvent.Set();
+            _signalEvent.Set();
             return retVal;
         }
 
@@ -495,7 +486,7 @@ namespace LogViewer {
 
         public static void SearchInLogs(String pattern, Action<Log, int> completionCallback) {
             StopSearch = true;
-            SignalEvent.WaitOne();
+            _signalEvent.WaitOne();
             StopSearch = false;
             new Thread(() => {
                 ClearSearchResults();
@@ -521,17 +512,17 @@ namespace LogViewer {
                 _workerQueue.QueueTask(() => {
                     completionCallback(firstSearchResult, SearchResults.Count);
                 });
-                SignalEvent.Set();
+                _signalEvent.Set();
             }).Start();
         }
 
         public static void LoadLogs(List<Log> logs) {
-            SignalEvent.WaitOne();
+            _signalEvent.WaitOne();
             LogInTextSelectionState = null;
             Log.Logs.Clear();
             ClearSearchResults();
             Logs.AddRange(logs);
-            SignalEvent.Set();
+            _signalEvent.Set();
         }
 
         public static void ParseLogFile(string path, IProgress<long> progress, Action<List<Log>> completionCallback) {
