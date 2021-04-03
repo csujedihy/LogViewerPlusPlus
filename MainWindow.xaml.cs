@@ -78,7 +78,7 @@ namespace LogViewer {
             };
 
             if (openFileDialog.ShowDialog() == true) {
-                LoadLogFileFromPath(openFileDialog.FileName);
+                LoadLogFileAndShowProgress(openFileDialog.FileName);
             }
         }
 
@@ -196,28 +196,27 @@ namespace LogViewer {
             Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
         }
 
-        private void LoadLogFileFromPath(string path) {
+        private void LoadLogFileAndShowProgress(string path) {
             var loadingWindow = new ProgressWindow
             {
                 Owner = this
             };
 
-            Log.Logs.Clear();
-            loadingWindow.Loaded += (s, _) => {
+            loadingWindow.Loaded += (s, e) => {
                 BackgroundWorker worker = new BackgroundWorker();
-                worker.DoWork += (ws, wargs) => {
-                    Log.LoadLogFile(path,
-                        (progress) => {
-                            (s as Window).Dispatcher.Invoke(() => {
-                                loadingWindow.LoadingProgressBar.Value = progress;
-                            });
-                        }, (logs) => {
-                            Dispatcher.Invoke(() => {
-                                Log.Logs.AddRange(logs);
-                            });
+                worker.DoWork += (_s, _e) => {
+                    var progress = new Progress<long>((value) => {
+                        loadingWindow.Dispatcher.Invoke(() => {
+                            loadingWindow.LoadingProgressBar.Value = value;
                         });
+                    });
+                    Log.ParseLogFile(path, progress, (logs) => {
+                        Dispatcher.Invoke(() => {
+                            Log.LoadLogs(logs);
+                        });
+                    });
                 };
-                worker.RunWorkerCompleted += (ws, workerArgs) => loadingWindow.Close();
+                worker.RunWorkerCompleted += (_s, _e) => loadingWindow.Close();
                 worker.RunWorkerAsync();
             };
             loadingWindow.ShowDialog();
@@ -236,7 +235,7 @@ namespace LogViewer {
                     return;
                 }
 
-                LoadLogFileFromPath(Path[0]);
+                LoadLogFileAndShowProgress(Path[0]);
             }
         }
 
@@ -399,7 +398,7 @@ namespace LogViewer {
         private static int SearchMatchesIndicesPos = -1;
         public static Log LogInTextSelectionState;
         public static LogSearchMode SearchMode = LogSearchMode.None;
-        private static volatile ManualResetEvent SignalEvent = new ManualResetEvent(true);
+        private static volatile AutoResetEvent SignalEvent = new AutoResetEvent(true);
         private static BackgroundQueue _workerQueue = new BackgroundQueue();
         public static bool FilterToSearchResults = false;
         public event PropertyChangedEventHandler PropertyChanged;
@@ -494,11 +493,10 @@ namespace LogViewer {
             }
         }
 
-        public static void SearchInLogs(String pattern, Action<Log, int> SearchCompleteCallback) {
+        public static void SearchInLogs(String pattern, Action<Log, int> completionCallback) {
             StopSearch = true;
             SignalEvent.WaitOne();
             StopSearch = false;
-            SignalEvent.Reset();
             new Thread(() => {
                 ClearSearchResults();
 
@@ -521,41 +519,47 @@ namespace LogViewer {
 
                 var firstSearchResult = GetCurrentSearchResult();
                 _workerQueue.QueueTask(() => {
-                    SearchCompleteCallback(firstSearchResult, SearchResults.Count);
+                    completionCallback(firstSearchResult, SearchResults.Count);
                 });
                 SignalEvent.Set();
             }).Start();
         }
 
-        public static void LoadLogFile(string path, Action<long> progressCallback, Action<List<Log>> completionCallback) {
+        public static void LoadLogs(List<Log> logs) {
+            SignalEvent.WaitOne();
+            LogInTextSelectionState = null;
+            Log.Logs.Clear();
+            ClearSearchResults();
+            Logs.AddRange(logs);
+            SignalEvent.Set();
+        }
+
+        public static void ParseLogFile(string path, IProgress<long> progress, Action<List<Log>> completionCallback) {
             int i = 0;
             string Line;
             var logFileStream = new StreamReader(path);
             var tempLogs = new List<Log>();
             long length = new System.IO.FileInfo(path).Length;
             long readBytes = 0;
-            long progress = 0;
-
-            SignalEvent.WaitOne();
-            LogInTextSelectionState = null;
-            ClearSearchResults();
+            long percentComplete = 0;
 
             while ((Line = logFileStream.ReadLine()) != null) {
                 tempLogs.Add(new Log(Line, ++i));
                 var encoding = logFileStream.CurrentEncoding;
                 readBytes += encoding.GetByteCount(Line);
                 var currProgress = (readBytes * 100 / length);
-                if (currProgress > progress) {
-                    progress = currProgress;
-                    progressCallback(progress);
+                if (currProgress > percentComplete) {
+                    percentComplete = currProgress;
+                    progress.Report(percentComplete);
                 }
             }
+
+            progress.Report(percentComplete);
 
             for (i = 0; i < tempLogs.Count; ++i) {
                 tempLogs[i].LineNoWidth = tempLogs[tempLogs.Count - 1].LineNoText.Length * 8;
             }
 
-            SignalEvent.Set();
             completionCallback(tempLogs);
         }
     }
