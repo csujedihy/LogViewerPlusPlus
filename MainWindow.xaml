@@ -122,7 +122,7 @@
                 Background="{Binding ListViewBgBrush}" >
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <Border Padding="3" Width="Auto" Background="{Binding LogRowBgBrush}">
+                    <Border Padding="5" Width="Auto" Background="{Binding LogRowBgBrush}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="{Binding LineNoWidth, Mode=OneTime}" />
@@ -133,14 +133,15 @@
                                 Text="{Binding LineNoText, Mode=OneTime}"
                                 FontFamily="Consolas"
                                 FontWeight="Medium"
+                                FontSize="12"
                                 TextAlignment="Right"
                                 VerticalAlignment="Center"
-                                Foreground="{Binding LineNoFgBrush, Source={x:Static local:MainWindow.colorThemeViewModel}}" />
+                                Foreground="{Binding LineNoFgBrush, Source={x:Static local:MainWindow.colorThemeViewModel}, Mode=OneWay}" />
                             <helpers:LwTextBlock
                                 x:Name="LogTextBlock"
                                 Grid.Column="1"
                                 Margin="10,0,0,0"
-                                Visibility="{Binding TextBlockVisibility}"
+                                Visibility="{Binding TextBlockVisibility, Mode=OneWay}"
                                 Text="{Binding Text, Mode=OneTime}"
                                 Width="Auto" />
                             <TextBox

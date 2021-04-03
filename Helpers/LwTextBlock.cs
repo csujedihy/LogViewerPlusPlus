@@ -14,7 +14,9 @@ namespace LogViewer.Helpers {
                  "Text",
                  typeof(string),
                  typeof(LwTextBlock),
-                 new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.AffectsMeasure,
+                 new FrameworkPropertyMetadata(
+                     string.Empty,
+                     FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender,
                     (o, e) => ((LwTextBlock)o).TextPropertyChanged((string)e.NewValue)));
 
         protected virtual void TextPropertyChanged(string text) {
