@@ -352,26 +352,26 @@ namespace LogViewer {
         public string Text { get; set; }
         public string LineNoText { get; set; }
         public int LineNoWidth { get; set; }
-        private Visibility _textSelectableBoxVisibility;
+        private Visibility _TextSelectableBoxVisibility;
         public Visibility TextSelectableBoxVisibility {
-            get => _textSelectableBoxVisibility;
-            set { _textSelectableBoxVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextSelectableBoxVisibility))); }
+            get => _TextSelectableBoxVisibility;
+            set { _TextSelectableBoxVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextSelectableBoxVisibility))); }
         }
-        private Visibility _textBlockVisibility;
+        private Visibility _TextBlockVisibility;
         public Visibility TextBlockVisibility {
-            get => _textBlockVisibility;
-            set { _textBlockVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextBlockVisibility))); }
+            get => _TextBlockVisibility;
+            set { _TextBlockVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextBlockVisibility))); }
         }
-        private SolidColorBrush _logRowBgBrush;
+        private SolidColorBrush _LogRowBgBrush;
         public SolidColorBrush LogRowBgBrush {
-            get => _logRowBgBrush;
-            set { _logRowBgBrush = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LogRowBgBrush))); }
+            get => _LogRowBgBrush;
+            set { _LogRowBgBrush = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LogRowBgBrush))); }
         }
-        private bool _isSelected;
+        private bool _IsSelected;
         public bool IsSelected {
-            get => _isSelected;
+            get => _IsSelected;
             set {
-                _isSelected = value;
+                _IsSelected = value;
                 if (value) {
                     HighlightState |= LogHighlightState.SelectedHighlight;
                 } else {
@@ -389,6 +389,7 @@ namespace LogViewer {
         private static int SearchMatchesIndicesPos = -1;
         public static Log LogInTextSelectionState;
         public static LogSearchMode SearchMode = LogSearchMode.None;
+        // Search results are updated in UI thread and are guraded by this event.
         private static AutoResetEvent _signalEvent = new AutoResetEvent(true);
         private static BackgroundQueue _workerQueue = new BackgroundQueue();
         public static bool FilterToSearchResults = false;
