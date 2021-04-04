@@ -30,6 +30,7 @@ namespace LogViewer {
                 border.Padding = new Thickness(0);
             }
             LogListView.ItemsSource = Log.Logs;
+            FilterDataGrid.ItemsSource = Filter.Filters;
             var view = (CollectionView)CollectionViewSource.GetDefaultView(LogListView.ItemsSource);
             view.Filter = UserFilter;
             PrevButton.Click += SearchPrev;
@@ -48,6 +49,7 @@ namespace LogViewer {
                 }
             };
             this.MouseDown += Window_MouseDown;
+            Filter.Filters.Add(new Filter(false, "hello world", LogSearchMode.None));
         }
 
         private void CloseCommandHandler(object sender, ExecutedRoutedEventArgs e) {
@@ -107,9 +109,9 @@ namespace LogViewer {
         private void CaseSensitiveToggle_Click(object sender, RoutedEventArgs e) {
             var toggleButton = sender as ToggleButton;
             if ((bool)toggleButton.IsChecked) {
-                Log.SearchMode |= Log.LogSearchMode.CaseSensitive;
+                Log.SearchMode |= LogSearchMode.CaseSensitive;
             } else {
-                Log.SearchMode &= ~Log.LogSearchMode.CaseSensitive;
+                Log.SearchMode &= ~LogSearchMode.CaseSensitive;
             }
 
             string SearchTextBoxContent = SearchBox.Text;
@@ -120,9 +122,9 @@ namespace LogViewer {
         private void ExactMatchToggle_Click(object sender, RoutedEventArgs e) {
             var toggleButton = sender as ToggleButton;
             if ((bool)toggleButton.IsChecked) {
-                Log.SearchMode |= Log.LogSearchMode.WholeWordMatch;
+                Log.SearchMode |= LogSearchMode.WholeWordMatch;
             } else {
-                Log.SearchMode &= ~Log.LogSearchMode.WholeWordMatch;
+                Log.SearchMode &= ~LogSearchMode.WholeWordMatch;
             }
 
             string SearchTextBoxContent = SearchBox.Text;
@@ -133,9 +135,9 @@ namespace LogViewer {
         private void RegexToggle_Click(object sender, RoutedEventArgs e) {
             var toggleButton = sender as ToggleButton;
             if ((bool)toggleButton.IsChecked) {
-                Log.SearchMode |= Log.LogSearchMode.Regex;
+                Log.SearchMode |= LogSearchMode.Regex;
             } else {
-                Log.SearchMode &= ~Log.LogSearchMode.Regex;
+                Log.SearchMode &= ~LogSearchMode.Regex;
             }
 
             string SearchTextBoxContent = SearchBox.Text;
@@ -357,20 +359,68 @@ namespace LogViewer {
         }
     }
 
+    [Flags]
+    public enum LogSearchMode {
+        None = 0,
+        CaseSensitive = 1,
+        Regex = 2,
+        WholeWordMatch = 4,
+    };
+
+    public class Filter : INotifyPropertyChanged {
+        #region Properties
+        private bool _IsEnabled;
+        public bool IsEnabled {
+            get => _IsEnabled;
+            set {
+                _IsEnabled = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsEnabled)));
+            }
+        }
+
+        private string _Pattern;
+        public string Pattern {
+            get => _Pattern;
+            set {
+                _Pattern = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Pattern)));
+            }
+        }
+
+        private LogSearchMode _SearchMode;
+        public LogSearchMode SearchMode {
+            get => _SearchMode;
+            set {
+                _SearchMode = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SearchMode)));
+            }
+        }
+
+        private int _Hits;
+        public int Hits {
+            get => _Hits;
+            set {
+                _Hits = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Hits)));
+            }
+        }
+        #endregion
+        public static SmartCollection<Filter> Filters = new SmartCollection<Filter>();
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public Filter(bool isEnabled, string pattern, LogSearchMode mode) {
+            IsEnabled = isEnabled;
+            Pattern = pattern;
+            SearchMode = mode;
+        }
+    }
+
     public class Log : INotifyPropertyChanged {
         [Flags]
         public enum LogHighlightState {
             NoHighlight = 0,
             SearchResultHighlight = 1,
             SelectedHighlight = 2,
-        };
-        [Flags]
-        public enum LogSearchMode {
-            None = 0,
-            CaseSensitive = 1,
-            Regex = 2,
-            WholeWordMatch = 4,
-            Filter = 8,
         };
 
         #region Properties

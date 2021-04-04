@@ -85,15 +85,17 @@
         </Style>
     </Window.Resources>
     <Grid x:Name="MainGrid">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*" />
+            <ColumnDefinition Width="6" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="30" />
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-        <Menu Padding="2">
+        <Menu Padding="2" Grid.ColumnSpan="3">
             <MenuItem Header="File">
                 <MenuItem
                     Header="_Open"
@@ -104,6 +106,7 @@
             </MenuItem>
         </Menu>
         <ListView
+                Grid.Column="0"
                 Grid.Row="1"
                 x:Name="LogListView"
                 MaxHeight="1000"
@@ -170,7 +173,50 @@
                 </Style>
             </ListView.ItemContainerStyle>
         </ListView>
-        <StackPanel Grid.Row="2" Orientation = "Horizontal">
+        <GridSplitter Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch">
+            <GridSplitter.Template>
+                <ControlTemplate TargetType="{x:Type GridSplitter}">
+                    <Grid>
+                        <Button Content="⁞" FontWeight="Bold"/>
+                        <Rectangle Fill="#00FFFFFF" />
+                    </Grid>
+                </ControlTemplate>
+            </GridSplitter.Template>
+        </GridSplitter>
+        <DataGrid
+            x:Name="FilterDataGrid"
+            DataGrid.GridLinesVisibility="None"
+            Grid.Row="1" Grid.Column="2"
+            AutoGenerateColumns="False"
+            RowHeaderWidth="0"
+            CanUserAddRows="False" >
+            <DataGrid.Resources>
+                <Style TargetType="{x:Type DataGridCell}">
+                    <Setter Property="Padding" Value="4" />
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type DataGridCell}">
+                                <Border Padding="{TemplateBinding Padding}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                                    <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+                <Style TargetType="DataGrid">
+                    <Setter Property="BorderThickness" Value="1" />
+                    <Setter Property="BorderBrush" Value="LightSlateGray" />
+                    <Setter Property="Background" Value="Transparent" />
+                </Style>
+            </DataGrid.Resources>
+            <DataGrid.Columns>
+                <DataGridCheckBoxColumn Header="" Binding="{Binding IsEnabled}" />
+                <DataGridTextColumn Header="Pattern" IsReadOnly="True" Binding="{Binding Pattern}" Width="150"/>
+                <DataGridTextColumn Header="Hits" IsReadOnly="True" Binding="{Binding Hits}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <StackPanel Grid.Row="2"  Grid.ColumnSpan="3" Orientation = "Horizontal">
             <Border Style="{StaticResource TextboxContainerStyle}">
                 <StackPanel Orientation = "Horizontal">
                     <TextBox x:Name="SearchBox" Style="{StaticResource SearchBoxStyle}" TextChanged="SearchBoxTextChanged"/>
