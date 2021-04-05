@@ -14,10 +14,12 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace LogViewer {
     public partial class MainWindow : Window {
         public static ColorThemeViewModel colorThemeViewModel = new ColorThemeViewModel();
+        private DispatcherTimer _searchTextBoxTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
         public MainWindow() {
             InitializeComponent();
 
@@ -50,6 +52,7 @@ namespace LogViewer {
             };
             this.MouseDown += Window_MouseDown;
             Filter.Filters.Add(new Filter(false, "hello world", LogSearchMode.None));
+            _searchTextBoxTimer.Tick += _searchTextBoxTimer_Tick;
         }
 
         private void CloseCommandHandler(object sender, ExecutedRoutedEventArgs e) {
@@ -114,9 +117,8 @@ namespace LogViewer {
                 Log.SearchMode &= ~LogSearchMode.CaseSensitive;
             }
 
-            string SearchTextBoxContent = SearchBox.Text;
             UpdateUIBeforeSearch();
-            Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
+            Log.SearchInLogs((string)SearchBox.Text.Clone(), UpdateSearchResult);
         }
 
         private void ExactMatchToggle_Click(object sender, RoutedEventArgs e) {
@@ -127,9 +129,8 @@ namespace LogViewer {
                 Log.SearchMode &= ~LogSearchMode.WholeWordMatch;
             }
 
-            string SearchTextBoxContent = SearchBox.Text;
             UpdateUIBeforeSearch();
-            Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
+            Log.SearchInLogs((string)SearchBox.Text.Clone(), UpdateSearchResult);
         }
 
         private void RegexToggle_Click(object sender, RoutedEventArgs e) {
@@ -140,9 +141,8 @@ namespace LogViewer {
                 Log.SearchMode &= ~LogSearchMode.Regex;
             }
 
-            string SearchTextBoxContent = SearchBox.Text;
             UpdateUIBeforeSearch();
-            Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
+            Log.SearchInLogs((string)SearchBox.Text.Clone(), UpdateSearchResult);
         }
 
         private void FilterToggle_Click(object sender, RoutedEventArgs e) {
@@ -233,29 +233,34 @@ namespace LogViewer {
             CollectionViewSource.GetDefaultView(LogListView.ItemsSource).Refresh();
         }
 
-        private void SearchNext(object sender, RoutedEventArgs e) {
-            var log = Log.GetNextSearchResult();
+        private void GoToNextOrPrevSearchResult(Log log) {
             if (log != null) {
-                LogListView.SelectedItem = log;
-                LogListView.ScrollIntoView(LogListView.SelectedItem);
-                SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
+                Dispatcher.Invoke(() => {
+                    LogListView.SelectedItem = log;
+                    LogListView.ScrollIntoView(LogListView.SelectedItem);
+                    SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);                
+                });
             }
+        }
+
+        private void SearchNext(object sender, RoutedEventArgs e) {
+            Log.GetNextSearchResult(GoToNextOrPrevSearchResult);
+
         }
 
         private void SearchPrev(object sender, RoutedEventArgs e) {
-            var log = Log.GetPrevSearchResult();
-            if (log != null) {
-                LogListView.SelectedItem = log;
-                LogListView.ScrollIntoView(LogListView.SelectedItem);
-                SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
-            }
+            Log.GetPrevSearchResult(GoToNextOrPrevSearchResult);
         }
 
         private void SearchBoxTextChanged(object sender, TextChangedEventArgs e) {
-            var SearchTextBox = (TextBox)sender;
-            string SearchTextBoxContent = SearchTextBox.Text;
+            _searchTextBoxTimer.Stop();
+            _searchTextBoxTimer.Start();
+        }
+
+        private void _searchTextBoxTimer_Tick(object sender, EventArgs e) {
+            _searchTextBoxTimer.Stop();
             UpdateUIBeforeSearch();
-            Log.SearchInLogs(SearchTextBoxContent, UpdateSearchResult);
+            Log.SearchInLogs(SearchBox.Text, UpdateSearchResult);
         }
 
         private bool UserFilter(object item) {
@@ -462,12 +467,9 @@ namespace LogViewer {
         public int LineNo;
         public static SmartCollection<Log> Logs = new SmartCollection<Log>();
         public static List<Log> SearchResults = new List<Log>();
-        private volatile static bool StopSearch = false;
         private static int SearchMatchesIndicesPos = -1;
         public static Log LogInTextSelectionState;
         public static LogSearchMode SearchMode = LogSearchMode.None;
-        // Search results are updated in UI thread and are guraded by this event.
-        private static AutoResetEvent _signalEvent = new AutoResetEvent(true);
         private static BackgroundQueue _workerQueue = new BackgroundQueue();
         public static bool FilterToSearchResults = false;
         public event PropertyChangedEventHandler PropertyChanged;
@@ -530,34 +532,25 @@ namespace LogViewer {
             return SearchMatchesIndicesPos;
         }
 
-        public static Log GetNextSearchResult() {
-            Log retVal = null;
-            _signalEvent.WaitOne();
-
+        public static void GetNextSearchResult(Action<Log> completionCallback) {
             if (SearchResults.Count == 0 || SearchMatchesIndicesPos >= SearchResults.Count - 1) {
-                goto Done;
+                return;
             }
 
-            retVal = SearchResults[++SearchMatchesIndicesPos];
-
-        Done:
-            _signalEvent.Set();
-            return retVal;
+            completionCallback(SearchResults[++SearchMatchesIndicesPos]);
+            return;
         }
 
-        public static Log GetPrevSearchResult() {
-            Log retVal = null;
-            _signalEvent.WaitOne();
+        public static void GetPrevSearchResult(Action<Log> completionCallback) {
+            _workerQueue.QueueTask(() => {
+                if (SearchResults.Count == 0 || SearchMatchesIndicesPos <= 0) {
+                    return;
+                }
 
-            if (SearchResults.Count == 0 || SearchMatchesIndicesPos <= 0) {
-                goto Done;
-            }
+                completionCallback(SearchResults[--SearchMatchesIndicesPos]);
+                return;
+            });
 
-            retVal = SearchResults[--SearchMatchesIndicesPos];
-
-        Done:
-            _signalEvent.Set();
-            return retVal;
         }
 
         private static bool SearchPatternInText(string text, string pattern) {
@@ -581,17 +574,10 @@ namespace LogViewer {
         }
 
         public static void SearchInLogs(String pattern, Action<Log, int> completionCallback) {
-            StopSearch = true;
-            _signalEvent.WaitOne();
-            StopSearch = false;
-            new Thread(() => {
+            _workerQueue.QueueTask(() => {
                 ClearSearchResults();
-
                 if (pattern.Length > 0) {
                     for (int i = 0; i < Logs.Count; ++i) {
-                        if (StopSearch) {
-                            break;
-                        }
                         if (Logs[i].Text.Length > 0 && SearchPatternInText(Logs[i].Text, pattern)) {
                             SearchResults.Add(Logs[i]);
                             Logs[i].HighlightState |= LogHighlightState.SearchResultHighlight;
@@ -604,21 +590,15 @@ namespace LogViewer {
                     SearchMatchesIndicesPos = 0;
                 }
 
-                var firstSearchResult = GetCurrentSearchResult();
-                _workerQueue.QueueTask(() => {
-                    completionCallback(firstSearchResult, SearchResults.Count);
-                });
-                _signalEvent.Set();
-            }).Start();
+                completionCallback(GetCurrentSearchResult(), SearchResults.Count);
+            });
         }
 
         public static void LoadLogs(List<Log> logs) {
-            _signalEvent.WaitOne();
             LogInTextSelectionState = null;
             Log.Logs.Clear();
             ClearSearchResults();
             Logs.AddRange(logs);
-            _signalEvent.Set();
         }
 
         public static void ParseLogFile(string path, IProgress<long> progress, Action<List<Log>> completionCallback) {
