@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net48</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <UseWPF>true</UseWPF>
     <AssemblyName>LogViewer</AssemblyName>
     <RootNamespace>LogViewer</RootNamespace>
@@ -19,5 +19,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <Optimize>true</Optimize>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TAlex.WPF.Controls" Version="3.0.2" />
+  </ItemGroup>
 
 </Project>

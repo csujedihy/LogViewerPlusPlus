@@ -1,0 +1,50 @@
+﻿<Window x:Class="LogViewer.AddFilterWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:LogViewer" xmlns:talex="http://schemas.talex-soft.com/2010/xaml/presentation"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        mc:Ignorable="d"
+        Title="Add Filter" Height="350" Width="500">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="30"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation = "Horizontal">
+            <TextBlock Text="Preview" Style="{StaticResource ToolLabelStyle}"/>
+            <TextBlock TextWrapping="Wrap" Text="Lorem ipsum is placeholder text." Style="{StaticResource ToolLabelStyle}"/>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Orientation = "Horizontal">
+            <TextBlock Text="Text color" Style="{StaticResource ToolLabelStyle}"/>
+            <talex:ColorComboBox x:Name="colorComboBox" HorizontalAlignment="Center" VerticalAlignment="Center" SelectedColor="Green" />
+        </StackPanel>
+        <StackPanel Grid.Row="2"  Orientation = "Horizontal">
+            <TextBlock Text="Pattern" Style="{StaticResource ToolLabelStyle}"/>
+            <Border Style="{StaticResource TextboxContainerStyle}">
+                <DockPanel LastChildFill="False">
+                    <TextBox x:Name="SearchBox" Style="{StaticResource SearchBoxStyle}" Width="300"/>
+                    <ToggleButton
+                        x:Name="CaseSensitiveToggle"
+                        Content="Aa"
+                        Style="{StaticResource SearchModeToggleStyle}"
+                        ToolTip="Case senstive search"/>
+                    <ToggleButton
+                        x:Name="ExactMatchToggle"
+                        Content="Ex"
+                        Style="{StaticResource SearchModeToggleStyle}"
+                        ToolTip="Whole word match"/>
+                    <ToggleButton
+                        x:Name="RegexToggle"
+                        Content=".*"
+                        Style="{StaticResource SearchModeToggleStyle}"
+                        ToolTip="Regex"/>
+                </DockPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</Window>

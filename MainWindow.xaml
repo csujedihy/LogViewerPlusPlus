@@ -14,21 +14,10 @@
             Command="ApplicationCommands.Close" Executed="CloseCommandHandler" />
     </Window.CommandBindings>
     <Window.Resources>
-        <Style x:Key="ToolLabelStyle" TargetType="{x:Type TextBlock}">
-            <Setter Property="VerticalAlignment" Value="Center"></Setter>
-            <Setter Property="Margin" Value="5"></Setter>
-            <Setter Property="Width" Value="Auto"></Setter>
-        </Style>
         <Style x:Key="ToolsSeparatorStyle" TargetType="{x:Type Border}">
             <Setter Property="Background" Value="Silver"></Setter>
             <Setter Property="Margin" Value="10,3,10,3"></Setter>
             <Setter Property="Width" Value="1"></Setter>
-        </Style>
-        <Style x:Key="SearchNavButtonStyle" TargetType="{x:Type Button}">
-            <Setter Property="Margin" Value="0,3,0,3"></Setter>
-            <Setter Property="Padding" Value="5,0,5,0"></Setter>
-            <Setter Property="BorderThickness" Value="0"></Setter>
-            <Setter Property="Width" Value="Auto"></Setter>
         </Style>
         <Style x:Key="FilterToggleStyle" TargetType="{x:Type ToggleButton}">
             <Setter Property="Padding" Value="5,0,5,0"></Setter>
@@ -36,33 +25,6 @@
             <Setter Property="BorderThickness" Value="0"></Setter>
             <Setter Property="IsChecked" Value="False"></Setter>
             <Setter Property="IsThreeState" Value="False"></Setter>
-        </Style>
-        <Style x:Key="SearchModeToggleStyle" TargetType="{x:Type ToggleButton}">
-            <Setter Property="Background" Value="Transparent"></Setter>
-            <Setter Property="FontWeight" Value="Normal"></Setter>
-            <Setter Property="BorderThickness" Value="0"></Setter>
-            <Setter Property="FontWeight" Value="DemiBold"></Setter>
-            <Setter Property="Foreground" Value="Silver"></Setter>
-            <Setter Property="Width" Value="25"></Setter>
-            <Setter Property="IsChecked" Value="False"></Setter>
-            <Setter Property="IsThreeState" Value="False"></Setter>
-            <Style.Triggers>
-                <Trigger  Property="IsChecked" Value="True">
-                    <Setter Property="FontWeight" Value="Bold"></Setter>
-                    <Setter Property="Foreground" Value="SteelBlue"></Setter>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="TextboxContainerStyle" TargetType="{x:Type Border}">
-            <Setter Property="CornerRadius" Value="2"></Setter>
-            <Setter Property="BorderBrush" Value="Silver"></Setter>
-            <Setter Property="BorderThickness" Value="1"></Setter>
-            <Setter Property="Margin" Value="5, 3, 0, 3"></Setter>
-            <Style.Triggers>
-                <Trigger  Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="SkyBlue"></Setter>
-                </Trigger>
-            </Style.Triggers>
         </Style>
         <Style x:Key="GoToLineBoxStyle" TargetType="{x:Type TextBox}">
             <Setter Property="Background" Value="Transparent"></Setter>
@@ -75,13 +37,6 @@
                     <Setter Property="BorderBrush" Value="SkyBlue"></Setter>
                 </Trigger>
             </Style.Triggers>
-        </Style>
-        <Style x:Key="SearchBoxStyle" TargetType="{x:Type TextBox}">
-            <Setter Property="Background" Value="Transparent"></Setter>
-            <Setter Property="BorderThickness" Value="0"></Setter>
-            <Setter Property="Margin" Value="5, 0, 5, 0"></Setter>
-            <Setter Property="Width" Value="200"></Setter>
-            <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
         </Style>
     </Window.Resources>
     <Grid x:Name="MainGrid">
@@ -214,6 +169,11 @@
                     <Setter Property="Background" Value="Transparent" />
                 </Style>
             </DataGrid.Resources>
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Add Filter" Click="AddFilterHandler"/>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns>
                 <DataGridCheckBoxColumn Header="" Binding="{Binding IsEnabled}" />
                 <DataGridTextColumn Header="Pattern" IsReadOnly="True" Binding="{Binding Pattern}" Width="150">
@@ -238,7 +198,7 @@
         </DataGrid>
         <StackPanel Grid.Row="2"  Grid.ColumnSpan="3" Orientation = "Horizontal">
             <Border Style="{StaticResource TextboxContainerStyle}">
-                <StackPanel Orientation = "Horizontal">
+                <StackPanel Orientation="Horizontal" >
                     <TextBox x:Name="SearchBox" Style="{StaticResource SearchBoxStyle}" TextChanged="SearchBoxTextChanged"/>
                     <ToggleButton
                         x:Name="CaseSensitiveToggle"

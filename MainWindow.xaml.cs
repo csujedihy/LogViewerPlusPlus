@@ -276,6 +276,15 @@ namespace LogViewer {
             }
         }
         #endregion
+
+        private void AddFilterHandler(object sender, RoutedEventArgs e) {
+            var addFilterWindow = new AddFilterWindow
+            {
+                Owner = this
+            };
+
+            addFilterWindow.ShowDialog();
+        }
     }
 
     public class ColorThemeViewModel : INotifyPropertyChanged {
