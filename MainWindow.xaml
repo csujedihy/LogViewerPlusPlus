@@ -50,7 +50,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="30" />
         </Grid.RowDefinitions>
-        <Menu Padding="2" Grid.ColumnSpan="3">
+        <Menu Grid.Row="0" Padding="2" Grid.ColumnSpan="3">
             <MenuItem Header="File">
                 <MenuItem
                     Header="_Open"
@@ -60,9 +60,13 @@
                     Command="ApplicationCommands.Close" />
             </MenuItem>
         </Menu>
-        <ListView
-                Grid.Column="0"
-                Grid.Row="1"
+        <Grid Grid.Column="0" Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <ListView
+                Grid.Row="0"
                 x:Name="LogListView"
                 MaxHeight="1000"
                 Width="Auto"
@@ -77,15 +81,15 @@
                 PreviewKeyDown="LogListView_PreviewKeyDown"
                 DataContext="{x:Static local:MainWindow.colorThemeViewModel}"
                 Background="{Binding ListViewBgBrush}" >
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Border Padding="5" Width="Auto" Background="{Binding LogRowBgBrush}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="{Binding LineNoWidth, Mode=OneTime}" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="5" Width="Auto" Background="{Binding LogRowBgBrush}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="{Binding LineNoWidth, Mode=OneTime}" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
                                 Grid.Column="0"
                                 Text="{Binding LineNoText, Mode=OneTime}"
                                 FontFamily="Consolas"
@@ -94,14 +98,14 @@
                                 TextAlignment="Right"
                                 VerticalAlignment="Center"
                                 Foreground="{Binding LineNoFgBrush, Source={x:Static local:MainWindow.colorThemeViewModel}, Mode=OneWay}" />
-                            <helpers:LwTextBlock
+                                <helpers:LwTextBlock
                                 x:Name="LogTextBlock"
                                 Grid.Column="1"
                                 Margin="10,0,0,0"
                                 Visibility="{Binding TextBlockVisibility, Mode=OneWay}"
                                 Text="{Binding Text, Mode=OneTime}"
                                 Width="Auto" />
-                            <TextBox
+                                <TextBox
                                 x:Name="LogTextBox"
                                 Grid.Column="1"
                                 FontFamily="Consolas"
@@ -113,21 +117,24 @@
                                 Visibility="{Binding TextSelectableBoxVisibility, Mode=OneWay}"
                                 Text="{Binding Text, Mode=OneTime}"
                                 Width="Auto" />
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                    <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick"/>
-                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
-                    <Setter Property="Padding" Value="0"/>
-                    <Setter Property="Margin" Value="0"/>
-                    <Setter Property="BorderThickness" Value="0"/>
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                </Style>
-            </ListView.ItemContainerStyle>
-        </ListView>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick"/>
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Margin" Value="0"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+            </ListView>
+            <RichTextBox Grid.Row="1" IsReadOnly="True"/>
+        </Grid>
+
         <GridSplitter Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch">
             <GridSplitter.Template>
                 <ControlTemplate TargetType="{x:Type GridSplitter}">

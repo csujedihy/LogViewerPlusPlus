@@ -1,13 +1,13 @@
 ﻿using LogViewer.Helpers;
 using Microsoft.Win32;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -238,7 +238,7 @@ namespace LogViewer {
                 Dispatcher.Invoke(() => {
                     LogListView.SelectedItem = log;
                     LogListView.ScrollIntoView(LogListView.SelectedItem);
-                    SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);                
+                    SearchResultTextBox.Text = String.Format("{0} of {1}", Log.GetCurrentSearchResultIndex() + 1, Log.SearchResults.Count);
                 });
             }
         }
@@ -418,6 +418,18 @@ namespace LogViewer {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Hits)));
             }
         }
+
+        private SolidColorBrush _PatternFgColor;
+        public SolidColorBrush PatternFgColor {
+            get => _PatternFgColor;
+            set { _PatternFgColor = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PatternFgColor))); }
+        }
+
+        private SolidColorBrush _PatternBgColor;
+        public SolidColorBrush PatternBgColor {
+            get => _PatternBgColor;
+            set { _PatternBgColor = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PatternBgColor))); }
+        }
         #endregion
         public static SmartCollection<Filter> Filters = new SmartCollection<Filter>();
         public event PropertyChangedEventHandler PropertyChanged;
@@ -586,13 +598,19 @@ namespace LogViewer {
             _workerQueue.QueueTask(() => {
                 ClearSearchResults();
                 if (pattern.Length > 0) {
-                    for (int i = 0; i < Logs.Count; ++i) {
+                    var tempSearchResults = new ConcurrentBag<Log>();
+                    Parallel.For(0, Logs.Count, (i) => {
                         if (Logs[i].Text.Length > 0 && SearchPatternInText(Logs[i].Text, pattern)) {
-                            SearchResults.Add(Logs[i]);
+                            tempSearchResults.Add(Logs[i]);
                             Logs[i].HighlightState |= LogHighlightState.SearchResultHighlight;
                             Logs[i].TryHighlight();
                         }
-                    }
+                    });
+
+                    SearchResults.AddRange(tempSearchResults);
+                    SearchResults.Sort((x, y) => {
+                        return x.LineNo - y.LineNo;
+                    });
                 }
 
                 if (SearchResults.Count > 0) {
@@ -615,7 +633,7 @@ namespace LogViewer {
             string Line;
             var logFileStream = new StreamReader(path);
             var tempLogs = new List<Log>();
-            long length = new System.IO.FileInfo(path).Length;
+            long length = new FileInfo(path).Length;
             long readBytes = 0;
             long percentComplete = 0;
 

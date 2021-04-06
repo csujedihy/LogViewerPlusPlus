@@ -1,27 +1,40 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net48</TargetFramework>
+        <UseWPF>true</UseWPF>
+        <AssemblyName>LogViewer</AssemblyName>
+        <RootNamespace>LogViewer</RootNamespace>
+        <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
+        <Authors>Yi Huang</Authors>
+        <Company />
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net472</TargetFramework>
-    <UseWPF>true</UseWPF>
-    <AssemblyName>LogViewer</AssemblyName>
-    <RootNamespace>LogViewer</RootNamespace>
-    <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
-    <Authors>Yi Huang</Authors>
-    <Company />
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <Optimize>false</Optimize>
+    </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <Optimize>false</Optimize>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+        <Optimize>true</Optimize>
+    </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <Optimize>true</Optimize>
-  </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="TAlex.WPF.Controls" Version="3.0.2" />
+    </ItemGroup>
+    <PropertyGroup>   
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    </PropertyGroup>
+    <PropertyGroup>
+        <ResourceLanguages>en</ResourceLanguages>
+    </PropertyGroup>
+    <ItemGroup>
+        <FluentValidationExcludedCultures Include="be;cs;cs-CZ;da;de;es;fa;fi;fr;ja;it;ko;mk;nl;pl;pt;ru;sv;tr;uk;zh-CN;zh-CH;zh-CH">
+            <InProject>false</InProject>
+        </FluentValidationExcludedCultures> 
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="TAlex.WPF.Controls" Version="3.0.2" />
-  </ItemGroup>
-
+    <Target Name="RemoveTranslationsAfterBuild" AfterTargets="AfterBuild">
+        <RemoveDir Directories="@(FluentValidationExcludedCultures->'$(OutputPath)%(Filename)')" />
+    </Target> 
 </Project>
