@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -46,6 +47,15 @@ namespace LogViewer {
             } else {
                 filter.SearchMode &= ~flag;
             }
+        }
+
+        private void OkCancelButton_Click(object sender, RoutedEventArgs e) {
+            if ((sender as Button).Name == "OkButton") {
+                this.DialogResult = true;
+            } else {
+                this.DialogResult = false;
+            }
+            this.Close();
         }
     }
 

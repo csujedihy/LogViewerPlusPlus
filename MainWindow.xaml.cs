@@ -273,10 +273,13 @@ namespace LogViewer {
                 Owner = this
             };
             addFilterWindow.Loaded += (_s, _e) => {
-                addFilterWindow.filter = new Filter(false, "hello", LogSearchMode.CaseSensitive);
+                addFilterWindow.filter = new Filter(false, "hello", LogSearchMode.None);
                 addFilterWindow.DataContext = addFilterWindow.filter;
             };
-            addFilterWindow.ShowDialog();
+            var ok = addFilterWindow.ShowDialog();
+            if (ok == true) {
+                Filter.Filters.Add(addFilterWindow.filter);
+            }
         }
 
         private void LogListView_Scroll(object sender, ScrollEventArgs e) {
@@ -444,6 +447,7 @@ namespace LogViewer {
             IsEnabled = isEnabled;
             Pattern = pattern;
             SearchMode = mode;
+            PatternFgColor = MainWindow.colorThemeViewModel.LogTextFgBrush;
             PatternBgColor = MainWindow.colorThemeViewModel.LogTextBgSearchResultBrush;
         }
     }
