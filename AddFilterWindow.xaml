@@ -16,12 +16,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
             <RowDefinition Height="40"/>
-            <RowDefinition Height="40"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Orientation = "Horizontal" Margin="0,0,0,10">
-            <TextBlock Text="Preview" Style="{StaticResource ToolLabelStyle}"/>
-            <TextBlock TextWrapping="Wrap" Text="Lorem ipsum is placeholder text." Style="{StaticResource ToolLabelStyle}" Background="{Binding ElementName=colorComboBox, Path=SelectedBrush}"/>
-        </StackPanel>
         <StackPanel Grid.Row="1" Orientation = "Horizontal" Margin="0,0,0,10">
             <TextBlock Text="Text color" Style="{StaticResource ToolLabelStyle}"/>
             <talex:ColorComboBox x:Name="colorComboBox" HorizontalAlignment="Center" VerticalAlignment="Center" SelectedBrush="{Binding PatternBgColor}" />

@@ -274,14 +274,13 @@ namespace LogViewer {
             };
             addFilterWindow.Loaded += (_s, _e) => {
                 addFilterWindow.filter = new Filter(false, "hello", LogSearchMode.CaseSensitive);
-                addFilterWindow.PatternTextBox.DataContext = addFilterWindow.filter;
-                addFilterWindow.colorComboBox.DataContext = addFilterWindow.filter;
-                addFilterWindow.CaseSensitiveToggle.DataContext = addFilterWindow.filter;
-                addFilterWindow.ExactMatchToggle.DataContext = addFilterWindow.filter;
-                addFilterWindow.RegexToggle.DataContext = addFilterWindow.filter;
-
+                addFilterWindow.DataContext = addFilterWindow.filter;
             };
             addFilterWindow.ShowDialog();
+        }
+
+        private void LogListView_Scroll(object sender, ScrollEventArgs e) {
+
         }
     }
 
@@ -333,6 +332,14 @@ namespace LogViewer {
             }
         }
 
+        public SolidColorBrush _LogTextFgBrush;
+        public SolidColorBrush LogTextFgBrush {
+            get => _LogTextFgBrush;
+            set {
+                _LogTextFgBrush = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LogTextFgBrush)));
+            }
+        }
+
         public bool _DarkModeEnabled;
         public bool DarkModeEnabled {
             get => _DarkModeEnabled;
@@ -360,11 +367,11 @@ namespace LogViewer {
 
         public void ToggleDarkMode(bool Enabled) {
             if (Enabled) {
-                LwTextBlock.TextColor = LogTextFgDarkModeBrush;
+                LogTextFgBrush = LogTextFgDarkModeBrush;
                 ListViewBgBrush = LogListViewBgDarkModeBrush;
                 LineNoFgBrush = LineNoDarkModeBrush;
             } else {
-                LwTextBlock.TextColor = LogTextFgLightModeBrush;
+                LogTextFgBrush = LogTextFgLightModeBrush;
                 ListViewBgBrush = LogListViewBgLightModeBrush;
                 LineNoFgBrush = LineNoLightModeBrush;
             }

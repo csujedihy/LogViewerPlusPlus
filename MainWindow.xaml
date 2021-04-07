@@ -75,7 +75,6 @@
                 VirtualizingPanel.VirtualizationMode="Recycling"
                 VirtualizingPanel.IsVirtualizing="True"
                 SelectionChanged="LogListView_SelectionChanged"
-                HorizontalAlignment="Stretch"
                 Drop="LogListView_Drop"
                 AllowDrop="true"
                 PreviewKeyDown="LogListView_PreviewKeyDown"
@@ -98,11 +97,15 @@
                                     TextAlignment="Right"
                                     VerticalAlignment="Center"
                                     Foreground="{Binding LineNoFgBrush, Source={x:Static local:MainWindow.colorThemeViewModel}, Mode=OneWay}" />
-                                <helpers:LwTextBlock
+                                <TextBlock
                                     x:Name="LogTextBlock"
                                     Grid.Column="1"
                                     Margin="10,0,0,0"
                                     Text="{Binding Text, Mode=OneTime}"
+                                    Foreground="{Binding LogTextFgBrush, Source={x:Static local:MainWindow.colorThemeViewModel}, Mode=OneWay}"
+                                    FontFamily="Consolas"
+                                    FontWeight="Medium"
+                                    FontSize="12"
                                     Width="Auto" />
                             </Grid>
                         </Border>
