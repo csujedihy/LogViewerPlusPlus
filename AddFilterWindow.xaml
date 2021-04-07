@@ -9,6 +9,9 @@
         WindowStartupLocation="CenterOwner"
         mc:Ignorable="d"
         Title="Add Filter" Height="350" Width="500">
+    <Window.Resources>
+        <local:SearchModeValueConverter x:Key="SearchModeConverter"></local:SearchModeValueConverter>
+    </Window.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
@@ -21,27 +24,36 @@
         </StackPanel>
         <StackPanel Grid.Row="1" Orientation = "Horizontal" Margin="0,0,0,10">
             <TextBlock Text="Text color" Style="{StaticResource ToolLabelStyle}"/>
-            <talex:ColorComboBox x:Name="colorComboBox" HorizontalAlignment="Center" VerticalAlignment="Center" SelectedColor="Green" />
+            <talex:ColorComboBox x:Name="colorComboBox" HorizontalAlignment="Center" VerticalAlignment="Center" SelectedBrush="{Binding PatternBgColor}" />
         </StackPanel>
         <StackPanel Grid.Row="2"  Orientation = "Horizontal" Margin="0,0,0,10">
-            <TextBlock Text="Pattern" Style="{StaticResource ToolLabelStyle}"/>
+            <TextBlock Text="Pattern" Style="{StaticResource ToolLabelStyle}" />
             <Border Style="{StaticResource TextboxContainerStyle}">
                 <DockPanel LastChildFill="False">
-                    <TextBox x:Name="SearchBox" Style="{StaticResource SearchBoxStyle}" Width="300"/>
+                    <TextBox x:Name="PatternTextBox" Style="{StaticResource SearchBoxStyle}" Width="300" Text="{Binding Pattern, Mode=TwoWay}"/>
                     <ToggleButton
                         x:Name="CaseSensitiveToggle"
                         Content="Aa"
                         Style="{StaticResource SearchModeToggleStyle}"
+                        IsThreeState="False"
+                        IsChecked="{Binding SearchMode, Mode=OneWay, Converter={StaticResource SearchModeConverter}, ConverterParameter=0}"
+                        Click="SearchToggle_Click"
                         ToolTip="Case senstive search"/>
                     <ToggleButton
                         x:Name="ExactMatchToggle"
                         Content="Ex"
                         Style="{StaticResource SearchModeToggleStyle}"
+                        IsThreeState="False"
+                        IsChecked="{Binding SearchMode,  Mode=OneWay, Converter={StaticResource SearchModeConverter}, ConverterParameter=1}"
+                        Click="SearchToggle_Click"
                         ToolTip="Whole word match"/>
                     <ToggleButton
                         x:Name="RegexToggle"
                         Content=".*"
+                        IsThreeState="False"
                         Style="{StaticResource SearchModeToggleStyle}"
+                        IsChecked="{Binding SearchMode,  Mode=OneWay, Converter={StaticResource SearchModeConverter}, ConverterParameter=2}"
+                        Click="SearchToggle_Click"
                         ToolTip="Regex"/>
                 </DockPanel>
             </Border>

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -271,7 +272,15 @@ namespace LogViewer {
             {
                 Owner = this
             };
+            addFilterWindow.Loaded += (_s, _e) => {
+                addFilterWindow.filter = new Filter(false, "hello", LogSearchMode.CaseSensitive);
+                addFilterWindow.PatternTextBox.DataContext = addFilterWindow.filter;
+                addFilterWindow.colorComboBox.DataContext = addFilterWindow.filter;
+                addFilterWindow.CaseSensitiveToggle.DataContext = addFilterWindow.filter;
+                addFilterWindow.ExactMatchToggle.DataContext = addFilterWindow.filter;
+                addFilterWindow.RegexToggle.DataContext = addFilterWindow.filter;
 
+            };
             addFilterWindow.ShowDialog();
         }
     }
@@ -395,6 +404,7 @@ namespace LogViewer {
             get => _SearchMode;
             set {
                 _SearchMode = value;
+                Debug.WriteLine(value);
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SearchMode)));
             }
         }
@@ -427,6 +437,7 @@ namespace LogViewer {
             IsEnabled = isEnabled;
             Pattern = pattern;
             SearchMode = mode;
+            PatternBgColor = MainWindow.colorThemeViewModel.LogTextBgSearchResultBrush;
         }
     }
 
