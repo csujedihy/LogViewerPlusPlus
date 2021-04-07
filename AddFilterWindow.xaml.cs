@@ -51,9 +51,9 @@ namespace LogViewer {
 
         private void OkCancelButton_Click(object sender, RoutedEventArgs e) {
             if ((sender as Button).Name == "OkButton") {
-                this.DialogResult = true;
+                DialogResult = true;
             } else {
-                this.DialogResult = false;
+                DialogResult = false;
             }
             this.Close();
         }

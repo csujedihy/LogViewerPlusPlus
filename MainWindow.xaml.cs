@@ -24,7 +24,6 @@ namespace LogViewer {
         private DispatcherTimer _searchTextBoxTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
         public MainWindow() {
             InitializeComponent();
-
             Loaded += MainWindow_Loaded;
         }
 
@@ -282,8 +281,21 @@ namespace LogViewer {
             }
         }
 
-        private void LogListView_Scroll(object sender, ScrollEventArgs e) {
-
+        private void DataGridRow_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
+            var row = sender as DataGridRow;
+            var filter = row.Item as Filter;
+            var addFilterWindow = new AddFilterWindow
+            {
+                Owner = this
+            };
+            addFilterWindow.Loaded += (_s, _e) => {
+                addFilterWindow.filter = new Filter(filter);
+                addFilterWindow.DataContext = addFilterWindow.filter;
+            };
+            var ok = addFilterWindow.ShowDialog();
+            if (ok == true) {
+                filter.UpdateFilter(addFilterWindow.filter);
+            }
         }
     }
 
@@ -291,19 +303,19 @@ namespace LogViewer {
         public event PropertyChangedEventHandler PropertyChanged;
 
         #region Light theme constants
-        public static SolidColorBrush LineNoLightModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("Crimson"));
-        public static SolidColorBrush LogTextFgLightModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("Black"));
-        public static SolidColorBrush LogListViewBgLightModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("Transparent"));
-        public static SolidColorBrush LogTextBgSelectedLightModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("Silver"));
-        public static SolidColorBrush LogTextBgSearchResultLightModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("LightSkyBlue"));
+        public static Brush LineNoLightModeBrush = (Brush)(new BrushConverter().ConvertFrom("Crimson"));
+        public static Brush LogTextFgLightModeBrush = (Brush)(new BrushConverter().ConvertFrom("Black"));
+        public static Brush LogListViewBgLightModeBrush = (Brush)(new BrushConverter().ConvertFrom("Transparent"));
+        public static Brush LogTextBgSelectedLightModeBrush = (Brush)(new BrushConverter().ConvertFrom("Silver"));
+        public static Brush LogTextBgSearchResultLightModeBrush = (Brush)(new BrushConverter().ConvertFrom("LightSkyBlue"));
         #endregion
 
         #region Dark theme constants
-        public static SolidColorBrush LineNoDarkModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("#606D83"));
-        public static SolidColorBrush LogTextFgDarkModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("#E3E3E3"));
-        public static SolidColorBrush LogListViewBgDarkModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("#282C34"));
-        public static SolidColorBrush LogTextBgSelectedDarkModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("Indigo"));
-        public static SolidColorBrush LogTextBgSearchResultDarkModeBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("DarkSlateBlue"));
+        public static Brush LineNoDarkModeBrush = (Brush)(new BrushConverter().ConvertFrom("#606D83"));
+        public static Brush LogTextFgDarkModeBrush = (Brush)(new BrushConverter().ConvertFrom("#E3E3E3"));
+        public static Brush LogListViewBgDarkModeBrush = (Brush)(new BrushConverter().ConvertFrom("#282C34"));
+        public static Brush LogTextBgSelectedDarkModeBrush = (Brush)(new BrushConverter().ConvertFrom("Indigo"));
+        public static Brush LogTextBgSearchResultDarkModeBrush = (Brush)(new BrushConverter().ConvertFrom("DarkSlateBlue"));
         #endregion
 
         #region Text weight constants
@@ -312,31 +324,31 @@ namespace LogViewer {
         #endregion
 
         #region Properties
-        public SolidColorBrush LogTextBgSelectedBrush {
+        public Brush LogTextBgSelectedBrush {
             get => DarkModeEnabled ? LogTextBgSelectedDarkModeBrush : LogTextBgSelectedLightModeBrush;
         }
 
-        public SolidColorBrush LogTextBgSearchResultBrush {
+        public Brush LogTextBgSearchResultBrush {
             get => DarkModeEnabled ? LogTextBgSearchResultDarkModeBrush : LogTextBgSearchResultLightModeBrush;
         }
 
-        public SolidColorBrush _ListViewBgBrush;
-        public SolidColorBrush ListViewBgBrush {
+        public Brush _ListViewBgBrush;
+        public Brush ListViewBgBrush {
             get => _ListViewBgBrush;
             set {
                 _ListViewBgBrush = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ListViewBgBrush)));
             }
         }
-        public SolidColorBrush _LineNoFgBrush;
-        public SolidColorBrush LineNoFgBrush {
+        public Brush _LineNoFgBrush;
+        public Brush LineNoFgBrush {
             get => _LineNoFgBrush;
             set {
                 _LineNoFgBrush = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LineNoFgBrush)));
             }
         }
 
-        public SolidColorBrush _LogTextFgBrush;
-        public SolidColorBrush LogTextFgBrush {
+        public Brush _LogTextFgBrush;
+        public Brush LogTextFgBrush {
             get => _LogTextFgBrush;
             set {
                 _LogTextFgBrush = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LogTextFgBrush)));
@@ -428,14 +440,14 @@ namespace LogViewer {
             }
         }
 
-        private SolidColorBrush _PatternFgColor;
-        public SolidColorBrush PatternFgColor {
+        private Brush _PatternFgColor;
+        public Brush PatternFgColor {
             get => _PatternFgColor;
             set { _PatternFgColor = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PatternFgColor))); }
         }
 
-        private SolidColorBrush _PatternBgColor;
-        public SolidColorBrush PatternBgColor {
+        private Brush _PatternBgColor;
+        public Brush PatternBgColor {
             get => _PatternBgColor;
             set { _PatternBgColor = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PatternBgColor))); }
         }
@@ -449,6 +461,22 @@ namespace LogViewer {
             SearchMode = mode;
             PatternFgColor = MainWindow.colorThemeViewModel.LogTextFgBrush;
             PatternBgColor = MainWindow.colorThemeViewModel.LogTextBgSearchResultBrush;
+        }
+
+        public Filter(Filter filter) {
+            IsEnabled = filter.IsEnabled;
+            Pattern = filter.Pattern;
+            SearchMode = filter.SearchMode;
+            PatternFgColor = filter.PatternFgColor;
+            PatternBgColor = filter.PatternBgColor;
+        }
+
+        public void UpdateFilter(Filter filter) {
+            IsEnabled = filter.IsEnabled;
+            Pattern = filter.Pattern;
+            SearchMode = filter.SearchMode;
+            PatternFgColor = filter.PatternFgColor;
+            PatternBgColor = filter.PatternBgColor;
         }
     }
 
@@ -464,8 +492,8 @@ namespace LogViewer {
         public string Text { get; set; }
         public string LineNoText { get; set; }
         public int LineNoWidth { get; set; }
-        private SolidColorBrush _LogRowBgBrush;
-        public SolidColorBrush LogRowBgBrush {
+        private Brush _LogRowBgBrush;
+        public Brush LogRowBgBrush {
             get => _LogRowBgBrush;
             set { _LogRowBgBrush = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LogRowBgBrush))); }
         }
@@ -637,6 +665,7 @@ namespace LogViewer {
             while ((Line = logFileStream.ReadLine()) != null) {
                 tempLogs.Add(new Log(Line, ++i));
                 var encoding = logFileStream.CurrentEncoding;
+                // progress estimation (not really accurate)
                 readBytes += encoding.GetByteCount(Line);
                 var currProgress = (readBytes * 100 / length);
                 if (currProgress > percentComplete) {

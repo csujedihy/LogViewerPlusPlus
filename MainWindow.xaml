@@ -141,6 +141,9 @@
             RowHeaderWidth="0"
             CanUserAddRows="False" >
             <DataGrid.Resources>
+                <Style TargetType="{x:Type DataGridRow}">
+                    <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick"/>
+                </Style>
                 <Style TargetType="{x:Type DataGridCell}">
                     <Setter Property="Padding" Value="4" />
                     <Setter Property="BorderThickness" Value="0"/>
@@ -176,7 +179,7 @@
                         <Style TargetType="{x:Type TextBlock}" >
                             <Setter Property="VerticalAlignment" Value="Center" />
                             <Setter Property="Margin" Value="4,0,0,0" />
-                            <Setter Property="Foreground" Value="{Binding PatternFgColor}"/>
+                            <Setter Property="Foreground" Value="{Binding LogTextFgBrush, Source={x:Static local:MainWindow.colorThemeViewModel}, Mode=OneWay}"/>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                     <DataGridTextColumn.CellStyle>
