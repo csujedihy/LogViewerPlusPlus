@@ -9,21 +9,21 @@
         WindowStartupLocation="CenterOwner"
         mc:Ignorable="d"
         Title="Add Filter" Height="350" Width="500">
-    <Grid>
+    <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="30"/>
-            <RowDefinition Height="30"/>
-            <RowDefinition Height="30"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Orientation = "Horizontal">
+        <StackPanel Grid.Row="0" Orientation = "Horizontal" Margin="0,0,0,10">
             <TextBlock Text="Preview" Style="{StaticResource ToolLabelStyle}"/>
             <TextBlock TextWrapping="Wrap" Text="Lorem ipsum is placeholder text." Style="{StaticResource ToolLabelStyle}"/>
         </StackPanel>
-        <StackPanel Grid.Row="1" Orientation = "Horizontal">
+        <StackPanel Grid.Row="1" Orientation = "Horizontal" Margin="0,0,0,10">
             <TextBlock Text="Text color" Style="{StaticResource ToolLabelStyle}"/>
             <talex:ColorComboBox x:Name="colorComboBox" HorizontalAlignment="Center" VerticalAlignment="Center" SelectedColor="Green" />
         </StackPanel>
-        <StackPanel Grid.Row="2"  Orientation = "Horizontal">
+        <StackPanel Grid.Row="2"  Orientation = "Horizontal" Margin="0,0,0,10">
             <TextBlock Text="Pattern" Style="{StaticResource ToolLabelStyle}"/>
             <Border Style="{StaticResource TextboxContainerStyle}">
                 <DockPanel LastChildFill="False">

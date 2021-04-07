@@ -12,6 +12,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -50,7 +51,6 @@ namespace LogViewer {
                     SearchNext(this, null);
                 }
             };
-            this.MouseDown += Window_MouseDown;
             Filter.Filters.Add(new Filter(false, "hello world", LogSearchMode.None));
             _searchTextBoxTimer.Tick += _searchTextBoxTimer_Tick;
         }
@@ -82,30 +82,19 @@ namespace LogViewer {
         #endregion
 
         #region Switch textbox view for double-click
-        private void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
-            var log = (sender as FrameworkElement).DataContext as Log;
-            log.TextBlockVisibility = Visibility.Collapsed;
-            log.TextSelectableBoxVisibility = Visibility.Visible;
-            Log.LogInTextSelectionState = log;
-        }
 
         private void LogListView_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            var log = Log.LogInTextSelectionState;
+            var log = (LogListView.SelectedItem as Log);
+            // log could be null when we open another log file.
             if (log != null) {
-                log.TextBlockVisibility = Visibility.Visible;
-                log.TextSelectableBoxVisibility = Visibility.Collapsed;
+                LogTextTextBox.Visibility = Visibility.Visible;
+                LogTextTextBox.Document.Blocks.Clear();
+                LogTextTextBox.Document.Blocks.Add(new Paragraph(new Run(log.Text)));
+            } else {
+                LogTextTextBox.Visibility = Visibility.Collapsed;
             }
         }
 
-        private void Window_MouseDown(object sender, MouseButtonEventArgs e) {
-            var log = ((sender as FrameworkElement).DataContext) as Log;
-            if (Log.LogInTextSelectionState != null) {
-                if (log == null || Log.LogInTextSelectionState != log) {
-                    Log.LogInTextSelectionState.TextBlockVisibility = Visibility.Visible;
-                    Log.LogInTextSelectionState.TextSelectableBoxVisibility = Visibility.Collapsed;
-                }
-            }
-        }
         #endregion
 
         #region Toggle Handlers
@@ -453,16 +442,6 @@ namespace LogViewer {
         public string Text { get; set; }
         public string LineNoText { get; set; }
         public int LineNoWidth { get; set; }
-        private Visibility _TextSelectableBoxVisibility;
-        public Visibility TextSelectableBoxVisibility {
-            get => _TextSelectableBoxVisibility;
-            set { _TextSelectableBoxVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextSelectableBoxVisibility))); }
-        }
-        private Visibility _TextBlockVisibility;
-        public Visibility TextBlockVisibility {
-            get => _TextBlockVisibility;
-            set { _TextBlockVisibility = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TextBlockVisibility))); }
-        }
         private SolidColorBrush _LogRowBgBrush;
         public SolidColorBrush LogRowBgBrush {
             get => _LogRowBgBrush;
@@ -489,7 +468,6 @@ namespace LogViewer {
         public static SmartCollection<Log> Logs = new SmartCollection<Log>();
         public static List<Log> SearchResults = new List<Log>();
         private static int SearchMatchesIndicesPos = -1;
-        public static Log LogInTextSelectionState;
         public static LogSearchMode SearchMode = LogSearchMode.None;
         private static BackgroundQueue _workerQueue = new BackgroundQueue();
         public static bool FilterToSearchResults = false;
@@ -500,8 +478,6 @@ namespace LogViewer {
             this.LineNo = LineNo;
             this.LineNoText = this.LineNo.ToString();
             this.HighlightState = LogHighlightState.NoHighlight;
-            this.TextBlockVisibility = Visibility.Visible;
-            this.TextSelectableBoxVisibility = Visibility.Collapsed;
             this.TryHighlight();
         }
 
@@ -622,7 +598,6 @@ namespace LogViewer {
         }
 
         public static void LoadLogs(List<Log> logs) {
-            LogInTextSelectionState = null;
             Log.Logs.Clear();
             ClearSearchResults();
             Logs.AddRange(logs);

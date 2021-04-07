@@ -90,40 +90,26 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock
-                                Grid.Column="0"
-                                Text="{Binding LineNoText, Mode=OneTime}"
-                                FontFamily="Consolas"
-                                FontWeight="Medium"
-                                FontSize="12"
-                                TextAlignment="Right"
-                                VerticalAlignment="Center"
-                                Foreground="{Binding LineNoFgBrush, Source={x:Static local:MainWindow.colorThemeViewModel}, Mode=OneWay}" />
+                                    Grid.Column="0"
+                                    Text="{Binding LineNoText, Mode=OneTime}"
+                                    FontFamily="Consolas"
+                                    FontWeight="Medium"
+                                    FontSize="12"
+                                    TextAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Foreground="{Binding LineNoFgBrush, Source={x:Static local:MainWindow.colorThemeViewModel}, Mode=OneWay}" />
                                 <helpers:LwTextBlock
-                                x:Name="LogTextBlock"
-                                Grid.Column="1"
-                                Margin="10,0,0,0"
-                                Visibility="{Binding TextBlockVisibility, Mode=OneWay}"
-                                Text="{Binding Text, Mode=OneTime}"
-                                Width="Auto" />
-                                <TextBox
-                                x:Name="LogTextBox"
-                                Grid.Column="1"
-                                FontFamily="Consolas"
-                                FontWeight="Medium"
-                                Margin="10,0,0,0"
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Center"
-                                IsReadOnly="True"
-                                Visibility="{Binding TextSelectableBoxVisibility, Mode=OneWay}"
-                                Text="{Binding Text, Mode=OneTime}"
-                                Width="Auto" />
+                                    x:Name="LogTextBlock"
+                                    Grid.Column="1"
+                                    Margin="10,0,0,0"
+                                    Text="{Binding Text, Mode=OneTime}"
+                                    Width="Auto" />
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </ListView.ItemTemplate>
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
-                        <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick"/>
                         <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                         <Setter Property="Padding" Value="0"/>
                         <Setter Property="Margin" Value="0"/>
@@ -132,9 +118,8 @@
                     </Style>
                 </ListView.ItemContainerStyle>
             </ListView>
-            <RichTextBox Grid.Row="1" IsReadOnly="True"/>
+            <RichTextBox x:Name="LogTextTextBox" Grid.Row="1" IsReadOnly="True" Visibility="Collapsed" Padding="5" FontSize="14" FontFamily="Consolas" MinHeight="100" />
         </Grid>
-
         <GridSplitter Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch">
             <GridSplitter.Template>
                 <ControlTemplate TargetType="{x:Type GridSplitter}">
