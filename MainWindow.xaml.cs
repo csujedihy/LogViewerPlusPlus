@@ -488,16 +488,26 @@ namespace LogViewer {
         }
 
         public void UpdateFilter(Filter filter) {
-            IsEnabled = filter.IsEnabled;
             Pattern = filter.Pattern;
             SearchMode = filter.SearchMode;
             PatternFgColor = filter.PatternFgColor;
             PatternBgColor = filter.PatternBgColor;
             Priority = filter.Priority;
+            // IsEnabled has to be the last one set because it checks whether the above states changed.
+            IsEnabled = filter.IsEnabled;
         }
 
         public void Apply(bool isEnabled, bool prevIsEnabled) {
-            if (_IsClone || isEnabled == prevIsEnabled) {
+            // We must not apply cloned filter on logs.
+            if (_IsClone) {
+                return;
+            }
+
+            Debug.WriteLine("Apply called Isdirty = " + _IsDirty);
+
+            // If not properties we care changed and enabled state didn't change,
+            // we do not apply the filer.
+            if (!_IsDirty && (isEnabled == prevIsEnabled)) {
                 return;
             }
 
@@ -505,6 +515,9 @@ namespace LogViewer {
 
             // TODO: better handle dup items in Log::Filters.
             if (isEnabled) {
+                if (prevIsEnabled) {
+                    Log.RemoveFilterInLogs(this);
+                }
                 Log.ApplyFilterInLogs(this);
             } else {
                 Log.RemoveFilterInLogs(this);
