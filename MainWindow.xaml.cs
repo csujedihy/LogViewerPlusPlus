@@ -51,7 +51,6 @@ namespace LogViewer {
                     SearchNext(this, null);
                 }
             };
-            Filter.Filters.Add(new Filter());
             _searchTextBoxTimer.Tick += _searchTextBoxTimer_Tick;
         }
 
@@ -267,17 +266,20 @@ namespace LogViewer {
         #endregion
 
         private void AddFilterHandler(object sender, RoutedEventArgs e) {
+            var filter = new Filter();
             var addFilterWindow = new AddFilterWindow
             {
                 Owner = this
             };
             addFilterWindow.Loaded += (_s, _e) => {
-                addFilterWindow.filter = new Filter();
+                addFilterWindow.filter = new Filter(filter);
                 addFilterWindow.DataContext = addFilterWindow.filter;
             };
             var ok = addFilterWindow.ShowDialog();
             if (ok == true) {
-                Filter.Filters.Add(addFilterWindow.filter);
+                filter.UpdateFilter(addFilterWindow.filter);
+                Debug.Assert(filter._IsClone == false);
+                Filter.Filters.Add(filter);
             }
         }
 
@@ -294,8 +296,8 @@ namespace LogViewer {
             };
             var ok = addFilterWindow.ShowDialog();
             if (ok == true) {
-                Debug.WriteLine("ok!!");
                 filter.UpdateFilter(addFilterWindow.filter);
+                Debug.Assert(filter._IsClone == false);
             }
         }
     }
@@ -402,14 +404,14 @@ namespace LogViewer {
         WholeWordMatch = 4,
     };
 
-    public class Filter : INotifyPropertyChanged {
+    public class Filter : INotifyPropertyChanged, IEquatable<Filter> {
         #region Properties
         private bool _IsEnabled;
         public bool IsEnabled {
             get => _IsEnabled;
             set {
+                Apply(value, _IsEnabled);
                 _IsEnabled = value;
-                Apply(value);
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsEnabled)));
             }
         }
@@ -464,15 +466,19 @@ namespace LogViewer {
         #endregion
         public static SmartCollection<Filter> Filters = new SmartCollection<Filter>();
         public event PropertyChangedEventHandler PropertyChanged;
-        private bool _IsClone;
+        public bool _IsClone;
+        private static int _FilterId = 0;
+        private int FilterId;
 
         public Filter() {
+            FilterId = ++_FilterId;
             _IsClone = false;
             PatternFgColor = MainWindow.colorThemeViewModel.LogTextFgBrush;
             PatternBgColor = MainWindow.colorThemeViewModel.LogTextBgSearchResultBrush;
         }
 
         public Filter(Filter filter) {
+            FilterId = ++_FilterId;
             _IsClone = true;
             UpdateFilter(filter);
         }
@@ -486,16 +492,22 @@ namespace LogViewer {
             Priority = filter.Priority;
         }
 
-        public void Apply(bool isEnabled) {
-            if (_IsClone) {
+        public void Apply(bool isEnabled, bool prevIsEnabled) {
+            if (_IsClone || isEnabled == prevIsEnabled) {
                 return;
             }
 
+            // TODO: better handle dup items in Log::Filters.
             if (isEnabled) {
                 Log.ApplyFilterInLogs(this);
             } else {
                 Log.RemoveFilterInLogs(this);
             }
+        }
+
+        public bool Equals(Filter other) {
+            if (other == null) return false;
+            return (this.FilterId.Equals(other.FilterId));
         }
     }
 
@@ -563,6 +575,9 @@ namespace LogViewer {
             } else if ((HighlightState & LogHighlightState.SearchResultHighlight) != 0) {
                 LogRowBgBrush = MainWindow.colorThemeViewModel.LogTextBgSearchResultBrush;
             } else if (_filtersApplied.Count > 0) {
+                _filtersApplied.Sort((x, y) => {
+                    return x.Priority - y.Priority;
+                });
                 LogRowBgBrush = _filtersApplied[0].PatternBgColor;
             } else {
                 LogRowBgBrush = Brushes.Transparent;
@@ -689,9 +704,19 @@ namespace LogViewer {
         }
 
         public static void RemoveFilterInLogs(Filter filter) {
+            Debug.WriteLine("filter hc " + filter.GetHashCode());
             _workerQueue.QueueTask(() => {
                 Parallel.For(0, Logs.Count, (i) => {
-                    Logs[i]._filtersApplied.Remove(filter);
+                    Debug.WriteLine("start filters left " + Logs[i]._filtersApplied.Count);
+                    for (int j = 0; j < Logs[i]._filtersApplied.Count; j++) {
+                        Debug.WriteLine("applied hc " + Logs[i]._filtersApplied[j].GetHashCode());
+                        if (Logs[i]._filtersApplied[j].GetHashCode() == filter.GetHashCode()) {
+                            Debug.WriteLine("Found item to be removed");
+                            Logs[i]._filtersApplied.RemoveAt(j);
+                            break;
+                        }
+                    }
+                    Debug.WriteLine("end filters left " + Logs[i]._filtersApplied.Count);
                     Logs[i].TryHighlight();
                 });
             });
