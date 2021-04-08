@@ -421,6 +421,7 @@ namespace LogViewer {
             get => _Pattern;
             set {
                 _Pattern = value;
+                _IsDirty = true;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Pattern)));
             }
         }
@@ -430,6 +431,7 @@ namespace LogViewer {
             get => _SearchMode;
             set {
                 _SearchMode = value;
+                _IsDirty = true;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SearchMode)));
             }
         }
@@ -439,6 +441,7 @@ namespace LogViewer {
             get => _Priority;
             set {
                 _Priority = value;
+                _IsDirty = true;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Priority)));
             }
         }
@@ -469,6 +472,7 @@ namespace LogViewer {
         public bool _IsClone;
         private static int _FilterId = 0;
         private int FilterId;
+        private bool _IsDirty;
 
         public Filter() {
             FilterId = ++_FilterId;
@@ -496,6 +500,8 @@ namespace LogViewer {
             if (_IsClone || isEnabled == prevIsEnabled) {
                 return;
             }
+
+            _IsDirty = false;
 
             // TODO: better handle dup items in Log::Filters.
             if (isEnabled) {
@@ -704,19 +710,9 @@ namespace LogViewer {
         }
 
         public static void RemoveFilterInLogs(Filter filter) {
-            Debug.WriteLine("filter hc " + filter.GetHashCode());
             _workerQueue.QueueTask(() => {
                 Parallel.For(0, Logs.Count, (i) => {
-                    Debug.WriteLine("start filters left " + Logs[i]._filtersApplied.Count);
-                    for (int j = 0; j < Logs[i]._filtersApplied.Count; j++) {
-                        Debug.WriteLine("applied hc " + Logs[i]._filtersApplied[j].GetHashCode());
-                        if (Logs[i]._filtersApplied[j].GetHashCode() == filter.GetHashCode()) {
-                            Debug.WriteLine("Found item to be removed");
-                            Logs[i]._filtersApplied.RemoveAt(j);
-                            break;
-                        }
-                    }
-                    Debug.WriteLine("end filters left " + Logs[i]._filtersApplied.Count);
+                    Logs[i]._filtersApplied.Remove(filter);
                     Logs[i].TryHighlight();
                 });
             });
