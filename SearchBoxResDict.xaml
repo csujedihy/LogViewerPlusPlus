@@ -45,4 +45,16 @@
         <Setter Property="BorderThickness" Value="0"></Setter>
         <Setter Property="Width" Value="Auto"></Setter>
     </Style>
+    <Style x:Key="StyledTextBox" TargetType="{x:Type TextBox}">
+        <Setter Property="Background" Value="Transparent"></Setter>
+        <Setter Property="BorderThickness" Value="0"></Setter>
+        <Setter Property="Width" Value="150"></Setter>
+        <Setter Property="Margin" Value="5,0,5,0"></Setter>
+        <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
+        <Style.Triggers>
+            <Trigger  Property="IsMouseOver" Value="True">
+                <Setter Property="BorderBrush" Value="SkyBlue"></Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
 </ResourceDictionary>

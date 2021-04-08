@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -56,6 +57,20 @@ namespace LogViewer {
                 DialogResult = false;
             }
             this.Close();
+        }
+
+        private void PriorityTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e) {
+            var textBox = sender as TextBox;
+            // Use SelectionStart property to find the caret position.
+            // Insert the previewed text into the existing text in the textbox.
+            var fullText = textBox.Text.Insert(textBox.SelectionStart, e.Text);
+
+            double val;
+            // If parsing is successful, set Handled to false
+            e.Handled = !double.TryParse(fullText,
+                                         NumberStyles.AllowTrailingWhite | NumberStyles.AllowLeadingWhite,
+                                         CultureInfo.InvariantCulture,
+                                         out val);
         }
     }
 

@@ -26,18 +26,6 @@
             <Setter Property="IsChecked" Value="False"></Setter>
             <Setter Property="IsThreeState" Value="False"></Setter>
         </Style>
-        <Style x:Key="GoToLineBoxStyle" TargetType="{x:Type TextBox}">
-            <Setter Property="Background" Value="Transparent"></Setter>
-            <Setter Property="BorderThickness" Value="0"></Setter>
-            <Setter Property="Width" Value="150"></Setter>
-            <Setter Property="Margin" Value="5,0,5,0"></Setter>
-            <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
-            <Style.Triggers>
-                <Trigger  Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="SkyBlue"></Setter>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
     </Window.Resources>
     <Grid x:Name="MainGrid">
         <Grid.ColumnDefinitions>
@@ -139,6 +127,7 @@
             Grid.Row="1" Grid.Column="2"
             AutoGenerateColumns="False"
             RowHeaderWidth="0"
+            AllowDrop="True"
             CanUserAddRows="False" >
             <DataGrid.Resources>
                 <Style TargetType="{x:Type DataGridRow}">
@@ -173,7 +162,13 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridCheckBoxColumn Header="" Binding="{Binding IsEnabled}" />
+                <DataGridTemplateColumn Header="">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Pattern" IsReadOnly="True" Binding="{Binding Pattern}" Width="150">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="{x:Type TextBlock}" >
@@ -192,6 +187,7 @@
                     </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
                 <DataGridTextColumn Header="Hits" IsReadOnly="True" Binding="{Binding Hits}" Width="*"/>
+                <DataGridTextColumn Header="Priority" IsReadOnly="True" Binding="{Binding Priority}" Width="*"/>
             </DataGrid.Columns>
         </DataGrid>
         <StackPanel Grid.Row="2"  Grid.ColumnSpan="3" Orientation = "Horizontal">
@@ -230,7 +226,7 @@
             <Border Style="{StaticResource ToolsSeparatorStyle}"/>
             <TextBlock Text="Go to Line" Style="{StaticResource ToolLabelStyle}"/>
             <Border Style="{StaticResource TextboxContainerStyle}">
-                <TextBox x:Name="GoToLineBox" TextChanged="GoToLineBoxTextChanged" Style="{StaticResource GoToLineBoxStyle}"/>
+                <TextBox x:Name="GoToLineBox" TextChanged="GoToLineBoxTextChanged" Style="{StaticResource StyledTextBox}"/>
             </Border>
             <Border Style="{StaticResource ToolsSeparatorStyle}"/>
             <ToggleButton

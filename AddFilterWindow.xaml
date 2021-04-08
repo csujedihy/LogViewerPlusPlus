@@ -24,6 +24,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Orientation="Vertical" Margin="0,0,0,10">
             <TextBlock Text="Text color" Style="{StaticResource ToolLabelStyle}"/>
@@ -61,7 +62,18 @@
                 </StackPanel>
             </Border>
         </StackPanel>
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" >
+        <StackPanel Grid.Row="2"  Orientation="Vertical" Margin="0,0,0,10">
+            <TextBlock Text="Priority" Style="{StaticResource ToolLabelStyle}"/>
+            <Border Style="{StaticResource TextboxContainerStyle}" Height="25" Width="Auto" HorizontalAlignment="Left">
+                <TextBox
+                    Style="{StaticResource StyledTextBox}"
+                    x:Name="PriorityTextbox"
+                    Width="250"
+                    Text="{Binding Priority, Mode=TwoWay}"
+                    PreviewTextInput="PriorityTextBox_PreviewTextInput"/>
+            </Border>
+        </StackPanel>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" >
             <Button x:Name="OkButton"  Content="Ok" Style="{StaticResource OkCancelButton}" Click="OkCancelButton_Click"/>
             <Button x:Name="CancelButton" Content="Cancel" Style="{StaticResource OkCancelButton}" Click="OkCancelButton_Click"/>
         </StackPanel>
