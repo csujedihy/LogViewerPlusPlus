@@ -20,6 +20,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="System.Collections" Version="4.3.0" />
         <PackageReference Include="TAlex.WPF.Controls" Version="3.0.2" />
     </ItemGroup>
     <PropertyGroup>   

@@ -46,8 +46,9 @@ namespace LogViewer.Helpers {
 
         #region constructors
 
-        PriorityQueue(int capacity, IComparer<T> comparer) {
+        public PriorityQueue(int capacity, IComparer<T> comparer) {
             _heap = new T[capacity > 0 ? capacity : DefaultCapacity];
+            _heapIndexes = new Dictionary<T, int>();
             _count = 0;
             _comparer = comparer;
         }
@@ -59,7 +60,7 @@ namespace LogViewer.Helpers {
         /// <summary>
         /// Gets the number of items in the priority queue.
         /// </summary>
-        int Count {
+        public int Count {
             get { return _count; }
         }
 
@@ -67,35 +68,23 @@ namespace LogViewer.Helpers {
         /// Gets the first or topmost object in the priority queue, which is the
         /// object with the minimum value.
         /// </summary>
-        T Top {
+        public T Top {
             get {
                 Debug.Assert(_count > 0);
-                if (!_isHeap) {
-                    Heapify();
-                }
-
-                return _heap[0];
+                return GetHeapItem(0);
             }
         }
 
         /// <summary>
         /// Adds an object to the priority queue.
         /// </summary>
-        void Push(T value) {
+        public void Push(T value) {
             // Increase the size of the array if necessary.
             if (_count == _heap.Length) {
                 Array.Resize<T>(ref _heap, _count * 2);
             }
 
-            // A common usage is to Push N items, then Pop them.  Optimize for that
-            // case by treating Push as a simple append until the first Top or Pop,
-            // which establishes the heap property.  After that, Push needs
-            // to maintain the heap property.
-            if (_isHeap) {
-                SiftUp(_count, ref value, 0);
-            } else {
-                _heap[_count] = value;
-            }
+            SiftUp(_count, ref value, 0);
 
             _count++;
         }
@@ -103,11 +92,8 @@ namespace LogViewer.Helpers {
         /// <summary>
         /// Removes the first node (i.e., the logical root) from the heap.
         /// </summary>
-        void Pop() {
+        public void Pop() {
             Debug.Assert(_count != 0);
-            if (!_isHeap) {
-                Heapify();
-            }
 
             if (_count > 0) {
                 --_count;
@@ -125,10 +111,21 @@ namespace LogViewer.Helpers {
                 // to end up near the bottom since it came from the bottom in the
                 // first place.  Overall, the two-phase method is noticeably better.
 
-                T x = _heap[_count];        // lift item x out from the last position
+                T x = GetHeapItem(_count);        // lift item x out from the last position
                 int index = SiftDown(0);    // sift the gap at the root down to the bottom
                 SiftUp(index, ref x, 0);    // sift the gap up, and insert x in its rightful position
-                _heap[_count] = default(T); // don't leak x
+                DiscardHeapItem(_count); // don't leak x
+            }
+        }
+
+        public void Remove(T value) {
+            if (_heapIndexes.ContainsKey(value)) {
+                var i = _heapIndexes[value];
+                --_count;
+                T x = GetHeapItem(_count);
+                int index = SiftDown(i);
+                SiftUp(index, ref x, 0);
+                DiscardHeapItem(_count);
             }
         }
 
@@ -152,11 +149,11 @@ namespace LogViewer.Helpers {
             while (leftChild < _count) {
                 int rightChild = HeapRightFromLeft(leftChild);
                 int bestChild =
-                    (rightChild < _count && _comparer.Compare(_heap[rightChild], _heap[leftChild]) < 0) ?
+                    (rightChild < _count && _comparer.Compare(GetHeapItem(rightChild), GetHeapItem(leftChild)) < 0) ?
                     rightChild : leftChild;
 
                 // Promote bestChild to fill the gap left by parent.
-                _heap[parent] = _heap[bestChild];
+                SetHeapItem(parent, ref GetHeapItem(bestChild));
 
                 // Restore invariants, i.e., let parent point to the gap.
                 parent = bestChild;
@@ -171,41 +168,14 @@ namespace LogViewer.Helpers {
         private void SiftUp(int index, ref T x, int boundary) {
             while (index > boundary) {
                 int parent = HeapParent(index);
-                if (_comparer.Compare(_heap[parent], x) > 0) {
-                    _heap[index] = _heap[parent];
+                if (_comparer.Compare(GetHeapItem(parent), x) > 0) {
+                    SetHeapItem(index, ref GetHeapItem(parent));
                     index = parent;
                 } else {
                     break;
                 }
             }
-            _heap[index] = x;
-        }
-
-        // Establish the heap property:  _heap[k] >= _heap[HeapParent(k)], for 0<k<_count
-        // Do this "bottom up", by iterating backwards.  At each iteration, the
-        // property inductively holds for k >= HeapLeftChild(i)+2;  the body of
-        // the loop extends the property to the children of position i (namely
-        // k=HLC(i) and k=HLC(i)+1) by lifting item x out from position i, sifting
-        // the resulting gap down to the bottom, then sifting it back up (within
-        // the subtree under i) until finding x's rightful position.
-        //
-        // Iteration i does work proportional to the height (distance to leaf)
-        // of the node at position i.  Half the nodes are leaves with height 0;
-        // there's nothing to do for these nodes, so we skip them by initializing
-        // i to the last non-leaf position.  A quarter of the nodes have height 1,
-        // an eigth have height 2, etc. so the total work is ~ 1*n/4 + 2*n/8 +
-        // 3*n/16 + ... = O(n).  This is much cheaper than maintaining the
-        // heap incrementally during the "Push" phase, which would cost O(n*log n).
-        private void Heapify() {
-            if (!_isHeap) {
-                for (int i = _count / 2 - 1; i >= 0; --i) {
-                    // we use a two-phase method for the same reason Pop does
-                    T x = _heap[i];
-                    int index = SiftDown(i);
-                    SiftUp(index, ref x, i);
-                }
-                _isHeap = true;
-            }
+            SetHeapItem(index, ref x);
         }
 
         /// <summary>
@@ -233,10 +203,19 @@ namespace LogViewer.Helpers {
             return i + 1;
         }
 
+        private Dictionary<T, int> _heapIndexes;
         private T[] _heap;
+        private ref T GetHeapItem(int i) => ref _heap[i];
+        private void SetHeapItem(int i, ref T x) {
+            _heapIndexes[x] = i;
+            _heap[i] = x;
+        }
+        private void DiscardHeapItem(int i) {
+            _heapIndexes.Remove(_heap[i]);
+            _heap[i] = default;
+        }
         private int _count;
         private IComparer<T> _comparer;
-        private bool _isHeap;
         private const int DefaultCapacity = 6;
 
         #endregion
