@@ -8,7 +8,7 @@
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
         mc:Ignorable="d"
-        Title="Add Filter" SizeToContent="WidthAndHeight">
+        SizeToContent="WidthAndHeight">
     <Window.Resources>
         <local:SearchModeValueConverter x:Key="SearchModeConverter"></local:SearchModeValueConverter>
         <Style x:Key="OkCancelButton" TargetType="{x:Type Button}">

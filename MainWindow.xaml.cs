@@ -271,6 +271,7 @@ namespace LogViewer {
             {
                 Owner = this
             };
+            addFilterWindow.Title = "Add Filter";
             addFilterWindow.Loaded += (_s, _e) => {
                 addFilterWindow.filter = new Filter(filter);
                 addFilterWindow.DataContext = addFilterWindow.filter;
@@ -286,10 +287,11 @@ namespace LogViewer {
         private void DataGridRow_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
             var row = sender as DataGridRow;
             var filter = (row.Item as Filter);
-            var addFilterWindow = new AddFilterWindow
+            var addFilterWindow = new AddFilterWindow   
             {
                 Owner = this
             };
+            addFilterWindow.Title = "Edit Filter";
             addFilterWindow.Loaded += (_s, _e) => {
                 addFilterWindow.filter = new Filter(filter);
                 addFilterWindow.DataContext = addFilterWindow.filter;
