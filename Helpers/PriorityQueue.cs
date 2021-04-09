@@ -110,11 +110,12 @@ namespace LogViewer.Helpers {
                 // That accounts for only n^(2/3) items, and x is even more likely
                 // to end up near the bottom since it came from the bottom in the
                 // first place.  Overall, the two-phase method is noticeably better.
-
+                T top = GetHeapItem(0);
                 T x = GetHeapItem(_count);        // lift item x out from the last position
                 int index = SiftDown(0);    // sift the gap at the root down to the bottom
                 SiftUp(index, ref x, 0);    // sift the gap up, and insert x in its rightful position
-                DiscardHeapItem(_count); // don't leak x
+                NullifyHeapItem(_count);
+                DiscardHeapItem(ref top);
             }
         }
 
@@ -125,7 +126,8 @@ namespace LogViewer.Helpers {
                 T x = GetHeapItem(_count);
                 int index = SiftDown(i);
                 SiftUp(index, ref x, 0);
-                DiscardHeapItem(_count);
+                NullifyHeapItem(_count);
+                DiscardHeapItem(ref value);
             }
         }
 
@@ -206,13 +208,13 @@ namespace LogViewer.Helpers {
         private Dictionary<T, int> _heapIndexes;
         private T[] _heap;
         private ref T GetHeapItem(int i) => ref _heap[i];
+        private void NullifyHeapItem(int i) => _heap[i] = default;
         private void SetHeapItem(int i, ref T x) {
             _heapIndexes[x] = i;
             _heap[i] = x;
         }
-        private void DiscardHeapItem(int i) {
-            _heapIndexes.Remove(_heap[i]);
-            _heap[i] = default;
+        private void DiscardHeapItem(ref T x) {
+            _heapIndexes.Remove(x);
         }
         private int _count;
         private IComparer<T> _comparer;

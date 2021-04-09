@@ -503,8 +503,6 @@ namespace LogViewer {
                 return;
             }
 
-            Debug.WriteLine("Apply called Isdirty = " + _IsDirty);
-
             // If not properties we care changed and enabled state didn't change,
             // we do not apply the filer.
             if (!_IsDirty && (isEnabled == prevIsEnabled)) {
@@ -527,6 +525,12 @@ namespace LogViewer {
         public bool Equals(Filter other) {
             if (other == null) return false;
             return (this.FilterId.Equals(other.FilterId));
+        }
+    }
+
+    class FilterComparer : IComparer<Filter> {
+        public int Compare(Filter x, Filter y) {
+            return x.Priority - y.Priority;
         }
     }
 
@@ -568,7 +572,7 @@ namespace LogViewer {
         }
         #endregion
 
-        public List<Filter> _filtersApplied;
+        public PriorityQueue<Filter> _filtersApplied;
         public LogHighlightState HighlightState = LogHighlightState.NoHighlight;
         public int LineNo;
         public static SmartCollection<Log> Logs = new SmartCollection<Log>();
@@ -578,13 +582,14 @@ namespace LogViewer {
         private static BackgroundQueue _workerQueue = new BackgroundQueue();
         public static bool FilterToSearchResults = false;
         public event PropertyChangedEventHandler PropertyChanged;
+        private static FilterComparer _filterComparer = new FilterComparer();
 
         public Log(string Text, int LineNo) {
             this.Text = Text;
             this.LineNo = LineNo;
             this.LineNoText = this.LineNo.ToString();
             this.HighlightState = LogHighlightState.NoHighlight;
-            this._filtersApplied = new List<Filter>();
+            this._filtersApplied = new PriorityQueue<Filter>(0, _filterComparer);
             this.TryHighlight();
         }
 
@@ -594,10 +599,7 @@ namespace LogViewer {
             } else if ((HighlightState & LogHighlightState.SearchResultHighlight) != 0) {
                 LogRowBgBrush = MainWindow.colorThemeViewModel.LogTextBgSearchResultBrush;
             } else if (_filtersApplied.Count > 0) {
-                _filtersApplied.Sort((x, y) => {
-                    return x.Priority - y.Priority;
-                });
-                LogRowBgBrush = _filtersApplied[0].PatternBgColor;
+                LogRowBgBrush = _filtersApplied.Top.PatternBgColor;
             } else {
                 LogRowBgBrush = Brushes.Transparent;
             }
@@ -714,7 +716,7 @@ namespace LogViewer {
                 if (filter.Pattern.Length > 0) {
                     Parallel.For(0, Logs.Count, (i) => {
                         if (Logs[i].Text.Length > 0 && SearchPatternInText(Logs[i].Text, filter.Pattern, filter.SearchMode)) {
-                            Logs[i]._filtersApplied.Add(filter);
+                            Logs[i]._filtersApplied.Push(filter);
                             Logs[i].TryHighlight();
                         }
                     });
