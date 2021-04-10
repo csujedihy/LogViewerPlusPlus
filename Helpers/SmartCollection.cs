@@ -5,21 +5,20 @@ using System.ComponentModel;
 using System.Diagnostics;
 
 namespace LogViewer.Helpers {
+    public interface INotifyRemoval<T> {
+        void OnRemoval(T x);
+    }
+
     public class SmartCollection<T> : ObservableCollection<T> {
-        public SmartCollection()
+        public delegate void OnRemovalDelegate(T x);
+        private readonly OnRemovalDelegate del;
+        public SmartCollection(OnRemovalDelegate del = null)
             : base() {
-        }
-
-        public SmartCollection(IEnumerable<T> collection)
-            : base(collection) {
-        }
-
-        public SmartCollection(List<T> list)
-            : base(list) {
+            this.del = del;
         }
 
         protected override void RemoveItem(int index) {
-            // TODO: add callback.
+            del?.Invoke(Items[index]);
             base.RemoveItem(index);
         }
 

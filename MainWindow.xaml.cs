@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -406,7 +407,7 @@ namespace LogViewer {
         WholeWordMatch = 4,
     };
 
-    public class Filter : INotifyPropertyChanged, IEquatable<Filter> {
+    public class Filter : INotifyPropertyChanged {
         #region Properties
         private bool _IsEnabled;
         public bool IsEnabled {
@@ -469,11 +470,16 @@ namespace LogViewer {
             set { _PatternBgColor = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PatternBgColor))); }
         }
         #endregion
-        public static SmartCollection<Filter> Filters = new SmartCollection<Filter>();
+
+        public static void FilterOnRemoval(Filter filter) {
+            filter.IsEnabled = false;
+        }
+
+        public static SmartCollection<Filter> Filters = new SmartCollection<Filter>(FilterOnRemoval);
         public event PropertyChangedEventHandler PropertyChanged;
+        private int FilterId;
         public bool _IsClone;
         private static int _FilterId = 0;
-        private int FilterId;
         private bool _IsDirty;
 
         public Filter() {
@@ -522,11 +528,6 @@ namespace LogViewer {
             } else {
                 Log.RemoveFilterInLogs(this);
             }
-        }
-
-        public bool Equals(Filter other) {
-            if (other == null) return false;
-            return (this.FilterId.Equals(other.FilterId));
         }
     }
 
@@ -716,12 +717,19 @@ namespace LogViewer {
         public static void ApplyFilterInLogs(Filter filter) {
             _workerQueue.QueueTask(() => {
                 if (filter.Pattern.Length > 0) {
-                    Parallel.For(0, Logs.Count, (i) => {
+                    int Hits = 0;
+                    Parallel.For(0, Logs.Count, ()=>0, (i, loop, total) => {
                         if (Logs[i].Text.Length > 0 && SearchPatternInText(Logs[i].Text, filter.Pattern, filter.SearchMode)) {
                             Logs[i]._filtersApplied.Push(filter);
                             Logs[i].TryHighlight();
+                            ++total;
                         }
+                        return total;
+                    }, (x) => {
+                        Interlocked.Add(ref Hits, x);
                     });
+
+                    filter.Hits = Hits;
                 }
             });
         }
@@ -732,6 +740,7 @@ namespace LogViewer {
                     Logs[i]._filtersApplied.Remove(filter);
                     Logs[i].TryHighlight();
                 });
+                filter.Hits = 0;
             });
         }
 
@@ -742,32 +751,41 @@ namespace LogViewer {
         }
 
         public static void ParseLogFile(string path, IProgress<long> progress, Action<List<Log>> completionCallback) {
-            int i = 0;
-            string Line;
-            var logFileStream = new StreamReader(path);
+            var filestream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 8092, FileOptions.SequentialScan);
+            var logFileStream = new StreamReader(filestream, Encoding.Unicode, true, 8092);
             var tempLogs = new List<Log>();
-            long length = new FileInfo(path).Length;
-            long readBytes = 0;
             long percentComplete = 0;
+            var TextList = new List<string>();
+            string Line;
 
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
             while ((Line = logFileStream.ReadLine()) != null) {
-                tempLogs.Add(new Log(Line, ++i));
-                var encoding = logFileStream.CurrentEncoding;
-                // progress estimation (not really accurate)
-                readBytes += encoding.GetByteCount(Line);
-                var currProgress = (readBytes * 100 / length);
+                TextList.Add(Line);
+            }
+
+            var LineNoWidth = TextList.Count.ToString().Length * 8;
+
+            for (int i = 0; i < TextList.Count; ++i) {
+                var log = new Log(TextList[i], i + 1);
+                log.LineNoWidth = LineNoWidth;
+                tempLogs.Add(log);
+                var currProgress = (i * 100 / TextList.Count);
                 if (currProgress > percentComplete) {
                     percentComplete = currProgress;
                     progress.Report(percentComplete);
                 }
             }
 
+            stopWatch.Stop();
+            TimeSpan ts = stopWatch.Elapsed;
+            string elapsedTime =
+                String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                    ts.Hours, ts.Minutes, ts.Seconds,
+                    ts.Milliseconds / 10);
+            Trace.TraceInformation("Open log file took " + elapsedTime);
+
             progress.Report(percentComplete);
-
-            for (i = 0; i < tempLogs.Count; ++i) {
-                tempLogs[i].LineNoWidth = tempLogs[tempLogs.Count - 1].LineNoText.Length * 8;
-            }
-
             completionCallback(tempLogs);
         }
     }
