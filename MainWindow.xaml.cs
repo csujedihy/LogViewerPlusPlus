@@ -61,7 +61,7 @@ namespace LogViewer {
 
         private void LogListView_PreviewKeyDown(object sender, KeyEventArgs e) {
             if (e.Key == Key.A && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))) {
-                Log.SelectAllLogs();
+                LogListView.SelectAll();
                 e.Handled = true;
             }
         }
@@ -255,10 +255,12 @@ namespace LogViewer {
         private bool UserFilter(object item) {
             if (Log.FilterToSearchResults && SearchBox.Text.Length > 0) {
                 var log = item as Log;
-                if ((log.HighlightState & Log.LogHighlightState.SearchResultHighlight) != 0) {
-                    return true;
-                } else {
-                    return false;
+                lock(log.HighlightStateLock) {
+                    if ((log.HighlightState & Log.LogHighlightState.SearchResultHighlight) != 0) {
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
             } else {
                 return true;
@@ -564,19 +566,22 @@ namespace LogViewer {
             get => _IsSelected;
             set {
                 _IsSelected = value;
-                if (value) {
-                    HighlightState |= LogHighlightState.SelectedHighlight;
-                } else {
-                    HighlightState &= ~LogHighlightState.SelectedHighlight;
+                lock(HighlightStateLock) {
+                    if (value) {
+                        HighlightState |= LogHighlightState.SelectedHighlight;
+                    } else {
+                        HighlightState &= ~LogHighlightState.SelectedHighlight;
+                    }
+                    TryHighlight();
                 }
-                TryHighlight();
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
             }
         }
         #endregion
 
         public PriorityQueue<Filter> _filtersApplied;
-        public LogHighlightState HighlightState = LogHighlightState.NoHighlight;
+        public object HighlightStateLock = new object();
+        public LogHighlightState HighlightState;
         public int LineNo;
         public static SmartCollection<Log> Logs = new SmartCollection<Log>();
         public static List<Log> SearchResults = new List<Log>();
@@ -628,8 +633,10 @@ namespace LogViewer {
 
         public static void ClearSearchResults() {
             foreach (var log in SearchResults) {
-                log.HighlightState &= ~LogHighlightState.SearchResultHighlight;
-                log.TryHighlight();
+                lock (log.HighlightStateLock) {
+                    log.HighlightState &= ~LogHighlightState.SearchResultHighlight;
+                    log.TryHighlight();
+                }
             }
             SearchResults.Clear();
         }
@@ -671,7 +678,10 @@ namespace LogViewer {
             bool IgnoreCase = ((searchMode & LogSearchMode.CaseSensitive) == 0);
             if ((searchMode & LogSearchMode.Regex) != 0) {
                 return Regex.IsMatch(
-                    text, pattern, RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
+                    text, pattern,
+                    RegexOptions.Singleline |
+                        RegexOptions.CultureInvariant |
+                        RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
             } else if ((searchMode & LogSearchMode.WholeWordMatch) != 0) {
                 // The simple algorithm here is use \b<regex>\b to find the whole word match.
                 // If the first character or the last character is a separator, then remove the corresponding \b.
@@ -680,7 +690,9 @@ namespace LogViewer {
                 var FinalPattern = string.Format(@"{0}{1}{2}", leftPattern, Regex.Escape(pattern), rightPattern);
                 return Regex.IsMatch(
                     text, FinalPattern,
-                    RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
+                    RegexOptions.Singleline |
+                        RegexOptions.CultureInvariant |
+                        RegexOptions.Compiled | (IgnoreCase ? RegexOptions.IgnoreCase : 0));
             } else {
                 return
                     text.IndexOf(pattern, IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) != -1;
@@ -692,11 +704,15 @@ namespace LogViewer {
                 ClearSearchResults();
                 if (pattern.Length > 0) {
                     var tempSearchResults = new ConcurrentBag<Log>();
+                    Stopwatch stopWatch = new Stopwatch();
+                    stopWatch.Start();
                     Parallel.For(0, Logs.Count, (i) => {
                         if (Logs[i].Text.Length > 0 && SearchPatternInText(Logs[i].Text, pattern, SearchMode)) {
                             tempSearchResults.Add(Logs[i]);
-                            Logs[i].HighlightState |= LogHighlightState.SearchResultHighlight;
-                            Logs[i].TryHighlight();
+                            lock (Logs[i].HighlightStateLock) {
+                                Logs[i].HighlightState |= LogHighlightState.SearchResultHighlight;
+                                Logs[i].TryHighlight();
+                            }
                         }
                     });
 
@@ -704,6 +720,13 @@ namespace LogViewer {
                     SearchResults.Sort((x, y) => {
                         return x.LineNo - y.LineNo;
                     });
+                    stopWatch.Stop();
+                    TimeSpan ts = stopWatch.Elapsed;
+                    string elapsedTime =
+                        String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                            ts.Hours, ts.Minutes, ts.Seconds,
+                            ts.Milliseconds / 10);
+                    Trace.TraceInformation("SearchInLogs log file took " + elapsedTime);
                 }
 
                 if (SearchResults.Count > 0) {
@@ -718,6 +741,8 @@ namespace LogViewer {
             _workerQueue.QueueTask(() => {
                 if (filter.Pattern.Length > 0) {
                     int Hits = 0;
+                    Stopwatch stopWatch = new Stopwatch();
+                    stopWatch.Start();
                     Parallel.For(0, Logs.Count, ()=>0, (i, loop, total) => {
                         if (Logs[i].Text.Length > 0 && SearchPatternInText(Logs[i].Text, filter.Pattern, filter.SearchMode)) {
                             Logs[i]._filtersApplied.Push(filter);
@@ -729,6 +754,13 @@ namespace LogViewer {
                         Interlocked.Add(ref Hits, x);
                     });
 
+                    stopWatch.Stop();
+                    TimeSpan ts = stopWatch.Elapsed;
+                    string elapsedTime =
+                        String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                            ts.Hours, ts.Minutes, ts.Seconds,
+                            ts.Milliseconds / 10);
+                    Trace.TraceInformation("ApplyFilterInLogs log file took " + elapsedTime);
                     filter.Hits = Hits;
                 }
             });
@@ -767,8 +799,10 @@ namespace LogViewer {
             var LineNoWidth = TextList.Count.ToString().Length * 8;
 
             for (int i = 0; i < TextList.Count; ++i) {
-                var log = new Log(TextList[i], i + 1);
-                log.LineNoWidth = LineNoWidth;
+                var log = new Log(TextList[i], i + 1)
+                {
+                    LineNoWidth = LineNoWidth
+                };
                 tempLogs.Add(log);
                 var currProgress = (i * 100 / TextList.Count);
                 if (currProgress > percentComplete) {
